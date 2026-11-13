@@ -9,7 +9,7 @@ class AssetLoader {
     const response = await fetch('/assets/manifest.json');
     if (!response.ok) throw new Error('Failed to load asset manifest');
     this.manifest = await response.json();
-    return this.manifest;
+    return this.manifest!;
   }
 
   getManifest(): AssetManifest | null {
