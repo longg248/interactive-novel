@@ -1,0 +1,45 @@
+{
+  "worldName": "Thanh Vân Cửu Trọng",
+  "cultivationRealms": [
+    { "id": "lianqi", "name": "Luyện Khí", "stages": 9, "description": "Hấp thu linh khí, rèn luyện thân thể" },
+    { "id": "zhuzhi", "name": "Trúc Cơ", "stages": 9, "description": "Kết tinh linh cơ, nền tảng đại đạo" },
+    { "id": "jindan", "name": "Kim Đan", "stages": 9, "description": "Kết đan trong cơ thể, bắt đầu bất tử" },
+    { "id": "yuanying", "name": "Nguyên Anh", "stages": 9, "description": "Nhân anh thoát xác, thần thức hóa hình" },
+    { "id": "huashen", "name": "Hóa Thần", "stages": 9, "description": "Thần hồn hợp nhất, cảm ứng thiên địa" },
+    { "id": "lianxu", "name": "Luyện Hư", "stages": 9, "description": "Rèn hư nhập vi, chạm đến pháp tắc" },
+    { "id": "dacheng", "name": "Đại Thừa", "stages": 9, "description": "Đại đạo thành tựu, chuẩn bị độ kiếp" },
+    { "id": "dongji", "name": "Động Tịch", "stages": 9, "description": "Mở động phủ, tạo thế giới nhỏ" },
+    { "id": "shengxian", "name": "Thăng Tiên", "stages": 1, "description": "Bay thăng Tiên Giới, vĩnh hằng bất diệt" }
+  ],
+  "sects": [
+    {
+      "id": "thanh_van",
+      "name": "Thanh Vân Tông",
+      "alignment": "Chính đạo",
+      "specialty": "Kiếm thuật, Phong Lôi pháp, Trận pháp",
+      "location": "Thanh Vân Sơn",
+      "reputation": "Uy danh cao, giáo dục đệ tử nghiêm ngặt"
+    },
+    {
+      "id": "huyet_ma",
+      "name": "Huyết Ma Tông",
+      "alignment": "Ma đạo",
+      "specialty": "Huyết pháp, Độc thuật, Tàn khốc",
+      "location": "Ma Uyên",
+      "reputation": "Tàn bạo, quyền lực là trên hết"
+    },
+    {
+      "id": "wuji",
+      "name": "Vô Cực Các",
+      "alignment": "Trung lập",
+      "specialty": "Thương mại, Trí mạng, Kiếm thuật tự do",
+      "location": "Vô Cực Hải",
+      "reputation": "Tự do, thực dụng, giàu có"
+    }
+  ],
+  "locations": [
+    { "id": "thanh_van_mountain", "name": "Thanh Vân Sơn", "type": "Sect", "description": "Chốn tu tiên chính đạo, sương mù năm tháng" },
+    { "id": "ma_uyen", "name": "Ma Uyên", "type": "Sect", "description": "Lộng lẫy huyết sắc, tiếng kêu rên ngày đêm" },
+    { "id": "mortal_village", "name": "Phàm Giới", "type": "Village", "description": "Những ngôi làng phàm nhân dưới chân núi" }
+  ]
+}

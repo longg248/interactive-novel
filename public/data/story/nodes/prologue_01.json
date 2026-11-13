@@ -1,0 +1,63 @@
+{
+  "id": "prologue_01",
+  "type": "scripted",
+  "title": "Chương 1: Nhập Môn",
+  "sceneData": {
+    "background": "temple_exterior",
+    "characters": [
+      { "id": "elder", "sprite": "elder_neutral", "position": "center" }
+    ],
+    "bgm": "peaceful",
+    "transition": "fade"
+  },
+  "content": {
+    "paragraphs": [
+      {
+        "speaker": null,
+        "text": "Thanh Vân Sơn sương mù bao phủ, những ngọn thông già vươn cao chạm mây. Không khí trong lành, mát lạnh, mang theo mùi hương thông và đất ẩm.",
+        "delay": 1000
+      },
+      {
+        "speaker": null,
+        "text": "Ngươi đứng trước cổng núi Thanh Vân Tông, trái tim đập nhanh. Hôm nay là ngày Đại Bàn - lễ hội tuyển đệ tử hàng năm. Ngươi - một phàm nhân từ villages dưới chân núi - đã vượt qua bao thử thách để đến đây.",
+        "delay": 1500
+      },
+      {
+        "speaker": "Lão Tổ Thanh Vân",
+        "text": "Hmm... Một thân Phàm Cốt, lại mang Thiên Linh Căn. Thật là hiếm gặp.",
+        "characterId": "elder",
+        "expression": "elder_serious",
+        "delay": 500
+      },
+      {
+        "speaker": "Lão Tổ Thanh Vân",
+        "text": "Lão phu là Lão Tổ Thanh Vân, trưởng lão ngoại môn. Ngươi tên là gì? Và ngươi đến đây để làm gì?",
+        "characterId": "elder",
+        "expression": "elder_neutral"
+      }
+    ]
+  },
+  "transitions": [
+    {
+      "targetNodeId": "prologue_02_intro",
+      "choiceId": "introduce_self",
+      "type": "direct"
+    },
+    {
+      "targetNodeId": "ai_bridge_elder_reaction",
+      "choiceId": "ask_question",
+      "type": "ai_bridge"
+    },
+    {
+      "targetNodeId": "prologue_02_silent",
+      "choiceId": "stay_silent",
+      "type": "direct"
+    }
+  ],
+  "conditions": [],
+  "metadata": {
+    "chapter": "Chương 1: Nhập Môn",
+    "estimatedDuration": 5,
+    "tags": ["prologue", "elder", "introduction"]
+  }
+}

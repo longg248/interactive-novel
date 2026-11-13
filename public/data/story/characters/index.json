@@ -1,0 +1,44 @@
+{
+  "elder": {
+    "id": "elder",
+    "name": "Lão Tổ Thanh Vân",
+    "title": "Trưởng lão ngoại môn Thanh Vân Tông",
+    "cultivation": "Hóa Thần sơ kỳ",
+    "personality": "Nghiêm khắc, công chính, thương yêu đệ tử nhưng không biểu hiện ra ngoài. Nói chuyện chậm rãi, dùng 'lão phu', văn phong trang trọng.",
+    "sprites": {
+      "neutral": "elder_neutral",
+      "smile": "elder_smile",
+      "serious": "elder_serious",
+      "angry": "elder_angry",
+      "surprised": "elder_surprised"
+    },
+    "voice": "low_male"
+  },
+  "lan": {
+    "id": "lan",
+    "name": "Tiểu Lan",
+    "title": "Đệ tử nội môn, Trúc Cơ trung kỳ",
+    "personality": "Hoạt bát, ham chơi, thích trêu chọc sư huynh/sư tỷ. Nói nhanh, dùng từ lóng, emoji. Thích ăn ngon.",
+    "sprites": {
+      "neutral": "lan_neutral",
+      "happy": "lan_happy",
+      "pout": "lan_pout",
+      "excited": "lan_excited",
+      "shy": "lan_shy"
+    },
+    "voice": "high_female"
+  },
+  "huyet_y": {
+    "id": "huyet_y",
+    "name": "Huyết Y",
+    "title": "Đệ tử Huyết Ma Tông, Kim Đan sơ kỳ",
+    "personality": "Cao ngạo, khinh thường chính đạo, tuân thủ quy tắc ma đạo riêng. Nói ít, hành động quyết đoán.",
+    "sprites": {
+      "neutral": "huyet_y_neutral",
+      "smirk": "huyet_y_smock",
+      "cold": "huyet_y_cold",
+      "battle": "huyet_y_battle"
+    },
+    "voice": "mid_male"
+  }
+}
