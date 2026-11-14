@@ -5,6 +5,7 @@ import { useGameStore } from '@/engine/StateManager';
 import { useAutoSave } from '@/hooks/useAutoSave';
 import { useUIStore } from '@/engine/UIState';
 import { useEffect } from 'react';
+import { FreeRoleplay } from '@/components/FreeRoleplay';
 import { sceneManager } from '@/engine/SceneManager';
 
 const noop = () => undefined;
@@ -41,6 +42,8 @@ export function Layout() {
     showSettings,
     showStats,
     showHelp,
+    showFree,
+    openFree,
     openSaveLoad,
     openHistory,
     openSettings,
@@ -61,6 +64,7 @@ export function Layout() {
         e.preventDefault();
         openSaveLoad();
       }
+      if (showFree && e.key !== 'Escape') return;
       if (e.key === 'Escape') {
         closeAll();
       }
@@ -76,7 +80,7 @@ export function Layout() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [showSaveLoad, showSettings, showStats, showHelp, openSaveLoad, openHistory, openSettings, openStats, openHelp, closeAll]);
+  }, [showSaveLoad, showSettings, showStats, showHelp, showFree, openSaveLoad, openHistory, openSettings, openStats, openHelp, closeAll]);
 
   return (
     <div className="relative w-full h-screen novel-bg overflow-hidden">
@@ -86,6 +90,7 @@ export function Layout() {
         onSettings={openSettings}
         onHistory={openHistory}
         onStats={openStats}
+        onFree={openFree}
       />
 
       {phase !== 'loading' && phase !== 'error' && (
@@ -163,6 +168,7 @@ export function Layout() {
       <HistoryLog isOpen={showHistory} onClose={() => useUIStore.getState().closeHistory()} />
       <SettingsMenu isOpen={showSettings} onClose={() => useUIStore.getState().closeSettings()} />
       <StatsPanel isOpen={showStats} onClose={() => useUIStore.getState().closeStats()} />
+      <FreeRoleplay isOpen={showFree} onClose={() => useUIStore.getState().closeFree()} />
       <HelpModal isOpen={showHelp} onClose={() => useUIStore.getState().closeHelp()} />
     </div>
   );

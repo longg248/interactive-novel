@@ -6,7 +6,10 @@ interface UIState {
   showSettings: boolean;
   showStats: boolean;
   showHelp: boolean;
-  
+  showFree: boolean;
+  openFree: () => void;
+  closeFree: () => void;
+
   openSaveLoad: () => void;
   closeSaveLoad: () => void;
   openHistory: () => void;
@@ -26,7 +29,10 @@ export const useUIStore = create<UIState>((set) => ({
   showSettings: false,
   showStats: false,
   showHelp: false,
-  
+  showFree: false,
+  openFree: () => set({ showFree: true }),
+  closeFree: () => set({ showFree: false }),
+
   openSaveLoad: () => set({ showSaveLoad: true }),
   closeSaveLoad: () => set({ showSaveLoad: false }),
   openHistory: () => set({ showHistory: true }),
@@ -42,6 +48,7 @@ export const useUIStore = create<UIState>((set) => ({
     showHistory: false, 
     showSettings: false, 
     showStats: false,
-    showHelp: false 
+    showHelp: false,
+    showFree: false
   }),
 }));

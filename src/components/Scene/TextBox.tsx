@@ -13,7 +13,7 @@ export function TextBox({ paragraphs, onComplete, onParagraphChange }: TextBoxPr
   const settings = useGameStore((st) => st.settings);
   const addHistory = useGameStore((st) => st.addHistory);
   const isModalOpen = useUIStore(
-    (u) => u.showSaveLoad || u.showHistory || u.showSettings || u.showStats || u.showHelp
+    (u) => u.showSaveLoad || u.showHistory || u.showSettings || u.showStats || u.showHelp || u.showFree
   );
   const modalRef = useRef(isModalOpen);
   modalRef.current = isModalOpen;

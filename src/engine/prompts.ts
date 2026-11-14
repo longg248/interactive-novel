@@ -77,3 +77,60 @@ ${playerInput ? 'Tiếp tục câu chuyện dựa trên hành động người c
 Hãy trả về JSON theo đúng format đã quy định.
 `.trim();
 }
+
+
+// ---------------------------------------------------------------------------
+// Free roleplay mode (player types any action; no scripted choices)
+// ---------------------------------------------------------------------------
+
+export type OutputLength = 'short' | 'medium' | 'long';
+
+export const OUTPUT_LENGTH_HINT: Record<OutputLength, { text: string; maxTokens: number }> = {
+  short: { text: '2-3 câu', maxTokens: 1024 },
+  medium: { text: '1-2 đoạn ngắn (khoảng 5-8 câu)', maxTokens: 2048 },
+  long: { text: '3-4 đoạn (khoảng 10-14 câu)', maxTokens: 4096 },
+};
+
+export const FREE_SYSTEM_PROMPT = `Bạn là người dẫn truyện (game master) cho một trò nhập vai văn bản tiếng Việt, thể loại tiên hiệp / tu chân, bối cảnh Thanh Vân Cửu Trọng.
+
+QUY TẮC:
+- Người chơi gõ hành động hoặc lời thoại tự do; bạn kể tiếp diễn biến và phản ứng của thế giới, NPC. KHÔNG quyết định hành động hay lời nói thay người chơi.
+- Giữ nhất quán với phần "GHI NHỚ" và "LỊCH SỬ GẦN ĐÂY". Không mâu thuẫn với những gì đã xảy ra.
+- Văn phong văn học, giàu giác quan. Lão Tổ xưng "lão phu"; Tiểu Lan hoạt bát, hay dùng tiếng lóng.
+- Tôn trọng độ dài yêu cầu.
+- Nếu người chơi yêu cầu xem suy nghĩ nội tâm của một nhân vật, hãy viết đoạn độc thoại nội tâm của nhân vật đó (không thay đổi cốt truyện).
+- Các dòng bắt đầu bằng "(OOC)" là chỉ dẫn ngoài truyện của người chơi: làm theo, không coi là hành động trong truyện.
+
+ĐỊNH DẠNG TRẢ VỀ (BẮT BUỘC JSON, không thêm gì khác):
+{ "narrative": "nội dung kể tiếp, các đoạn cách nhau bằng \\n\\n" }`;
+
+export function buildFreePrompt(args: {
+  history: Array<{ role: 'user' | 'ai'; text: string }>;
+  memories: string[];
+  worldNote: string;
+  length: OutputLength;
+  input: string;
+}): string {
+  const mem = args.memories.length
+    ? args.memories.map((m, i) => `${i + 1}. ${m}`).join('\n')
+    : '(chưa có)';
+  const hist = args.history.length
+    ? args.history.map((m) => `${m.role === 'user' ? 'NGƯỜI CHƠI' : 'DẪN TRUYỆN'}: ${m.text}`).join('\n')
+    : '(chưa có - đây là lượt mở đầu)';
+  return `
+=== GHI NHỚ (người chơi đã ghim, luôn đúng) ===
+${mem}
+
+=== THIẾT LẬP THÊM CỦA NGƯỜI CHƠI ===
+${args.worldNote || '(không có)'}
+
+=== LỊCH SỬ GẦN ĐÂY ===
+${hist}
+
+=== LƯỢT MỚI CỦA NGƯỜI CHƠI ===
+${args.input}
+
+=== YÊU CẦU ===
+Độ dài: ${OUTPUT_LENGTH_HINT[args.length].text}. Trả về JSON theo đúng định dạng.
+`.trim();
+}

@@ -1,4 +1,4 @@
-import { SYSTEM_PROMPT, buildUserPrompt } from './prompts';
+import { SYSTEM_PROMPT, FREE_SYSTEM_PROMPT, buildUserPrompt } from './prompts';
 import type {
   GameState,
   AINarratorResponse,
@@ -94,7 +94,10 @@ class AINarrator {
     let lastError = 'Unknown error';
     for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
       try {
-        const text = await this.request(buildUserPrompt(gameState, sceneContext, playerInput));
+        const text = await this.request(buildUserPrompt(gameState, sceneContext, playerInput), {
+          system: SYSTEM_PROMPT,
+          maxTokens: 4096,
+        });
         return this.parseResponse(text);
       } catch (error) {
         lastError = error instanceof Error ? error.message : String(error);
@@ -110,7 +113,34 @@ class AINarrator {
     return this.getFallbackResponse(lastError);
   }
 
-  private async request(userPrompt: string): Promise<string> {
+  /**
+   * Free roleplay turn. Unlike generateScene this THROWS on failure so the UI can
+   * show the error and let the player retry (no canned story text is invented).
+   */
+  async generateFree(userPrompt: string, maxTokens: number): Promise<string> {
+    if (!this.apiKey) throw new Error('Chưa cấu hình VITE_GEMINI_API_KEY');
+    let lastError: unknown;
+    for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+      try {
+        const text = await this.request(userPrompt, { system: FREE_SYSTEM_PROMPT, maxTokens });
+        return this.parseResponse(text).narrative;
+      } catch (error) {
+        lastError = error;
+        const retryable =
+          error instanceof HttpError
+            ? error.status === 429 || error.status >= 500
+            : !(error instanceof Error && error.name === 'AbortError');
+        if (!retryable || attempt === MAX_ATTEMPTS) break;
+        await sleep(800 * 2 ** (attempt - 1));
+      }
+    }
+    throw lastError instanceof Error ? lastError : new Error(String(lastError));
+  }
+
+  private async request(
+    userPrompt: string,
+    opts: { system: string; maxTokens: number }
+  ): Promise<string> {
     const controller = new AbortController();
     this.abortController = controller;
     const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
@@ -124,13 +154,13 @@ class AINarrator {
           'x-goog-api-key': this.apiKey,
         },
         body: JSON.stringify({
-          systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
+          systemInstruction: { parts: [{ text: opts.system }] },
           contents: [{ role: 'user', parts: [{ text: userPrompt }] }],
           generationConfig: {
             temperature: 0.8,
             topK: 40,
             topP: 0.95,
-            maxOutputTokens: 4096,
+            maxOutputTokens: opts.maxTokens,
             responseMimeType: 'application/json',
           },
           safetySettings: [
