@@ -7,7 +7,7 @@ interface BackgroundProps {
   className?: string;
 }
 
-export function Background({ sceneData, className }: BackgroundProps) {
+export function Background({ sceneData, className = "" }: BackgroundProps) {
   const bgSrc = useBackground(sceneData.background);
   const [opacity, setOpacity] = useState(0);
   const prevSrcRef = useRef<string | null>(null);

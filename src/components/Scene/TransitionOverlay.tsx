@@ -1,29 +1,35 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useGameStore } from '@/engine/StateManager';
 
 export function TransitionOverlay() {
   const [visible, setVisible] = useState(false);
-  const [direction, setDirection] = useState<'in' | 'out'>('in');
+  const [opaque, setOpaque] = useState(false);
   const currentSceneId = useGameStore((s) => s.currentSceneId);
+  const first = useRef(true);
 
   useEffect(() => {
-    // Show transition when scene changes
-    setDirection('out');
+    // No black flash on the very first render.
+    if (first.current) {
+      first.current = false;
+      return;
+    }
     setVisible(true);
-    const timer = setTimeout(() => {
-      setDirection('in');
-      const timer2 = setTimeout(() => setVisible(false), 300);
-      return () => clearTimeout(timer2);
-    }, 300);
-    return () => clearTimeout(timer);
+    setOpaque(true);
+    const t1 = window.setTimeout(() => setOpaque(false), 300);
+    const t2 = window.setTimeout(() => setVisible(false), 600);
+    return () => {
+      window.clearTimeout(t1);
+      window.clearTimeout(t2);
+    };
   }, [currentSceneId]);
 
   if (!visible) return null;
 
+  // pointer-events-none: the overlay must never swallow clicks on choices.
   return (
     <div
-      className={`fixed inset-0 z-50 bg-novel-bg transition-opacity duration-300 ${
-        direction === 'in' ? 'opacity-0' : 'opacity-100'
+      className={`fixed inset-0 z-50 bg-novel-bg pointer-events-none transition-opacity duration-300 ${
+        opaque ? 'opacity-100' : 'opacity-0'
       }`}
     />
   );

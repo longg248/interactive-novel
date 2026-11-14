@@ -11,7 +11,18 @@
     "elder_smile": "assets/sprites/elder_smile.webp",
     "elder_serious": "assets/sprites/elder_serious.webp",
     "protagonist_neutral": "assets/sprites/protagonist_neutral.webp",
-    "protagonist_determined": "assets/sprites/protagonist_determined.webp"
+    "protagonist_determined": "assets/sprites/protagonist_determined.webp",
+    "elder_angry": "assets/sprites/elder_angry.webp",
+    "elder_surprised": "assets/sprites/elder_surprised.webp",
+    "lan_neutral": "assets/sprites/lan_neutral.webp",
+    "lan_happy": "assets/sprites/lan_happy.webp",
+    "lan_pout": "assets/sprites/lan_pout.webp",
+    "lan_excited": "assets/sprites/lan_excited.webp",
+    "lan_shy": "assets/sprites/lan_shy.webp",
+    "huyet_y_neutral": "assets/sprites/huyet_y_neutral.webp",
+    "huyet_y_smirk": "assets/sprites/huyet_y_smirk.webp",
+    "huyet_y_cold": "assets/sprites/huyet_y_cold.webp",
+    "huyet_y_battle": "assets/sprites/huyet_y_battle.webp"
   },
   "audio": {
     "bgm": {

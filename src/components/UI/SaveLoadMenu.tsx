@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { sceneManager } from '@/engine/SceneManager';
 import { useGameStore } from '@/engine/StateManager';
 import type { SaveSlot } from '@/types';
 
@@ -11,6 +12,13 @@ export function SaveLoadMenu({ isOpen, onClose }: SaveLoadMenuProps) {
   const [mode, setMode] = useState<'save' | 'load'>('save');
   const { saveMetadata, saveGame, loadGame, deleteSave, exportSave, importSave } = useGameStore();
 
+  const refreshSlots = useGameStore((st) => st.refreshSlots);
+
+  // Re-read localStorage each time the menu opens (autosave / other tabs may have changed it).
+  useEffect(() => {
+    if (isOpen) refreshSlots();
+  }, [isOpen, refreshSlots]);
+
   const slots = saveMetadata.slots;
   const currentSlot = saveMetadata.currentSlot;
 
@@ -22,14 +30,24 @@ export function SaveLoadMenu({ isOpen, onClose }: SaveLoadMenuProps) {
   };
 
   const handleSave = (slotId: number) => {
-    saveGame(slotId);
-    onClose();
+    const existing = slots.find((x) => x.id === slotId);
+    if (existing && !confirm(`Ghi đè slot ${slotId}?`)) return;
+    if (saveGame(slotId)) {
+      onClose();
+    } else {
+      alert('Không thể lưu (chưa bắt đầu truyện hoặc bộ nhớ trình duyệt đã đầy).');
+    }
   };
 
-  const handleLoad = (slotId: number) => {
-    if (loadGame(slotId)) {
-      onClose();
+  const handleLoad = async (slotId: number) => {
+    if (!loadGame(slotId)) {
+      alert('Bản lưu không hợp lệ hoặc đã bị hỏng.');
+      return;
     }
+    // Loading only restored the variables: restart the saved scene so the screen matches.
+    const resumed = await sceneManager.resumeCurrentScene();
+    if (!resumed) alert('Không tìm thấy cảnh đã lưu - bản lưu có thể thuộc phiên bản truyện khác.');
+    onClose();
   };
 
   const handleDelete = (slotId: number) => {
@@ -52,7 +70,8 @@ export function SaveLoadMenu({ isOpen, onClose }: SaveLoadMenuProps) {
   const handleImport = (slotId: number, file: File) => {
     const reader = new FileReader();
     reader.onload = (e) => {
-      if (e.target?.result && importSave(e.target.result as string, slotId)) {
+      const text = typeof e.target?.result === 'string' ? e.target.result : '';
+      if (text && importSave(text, slotId)) {
         alert('Import thành công!');
       } else {
         alert('File save không hợp lệ!');
@@ -91,7 +110,7 @@ export function SaveLoadMenu({ isOpen, onClose }: SaveLoadMenuProps) {
         </div>
 
         <div className="grid gap-3 sm:grid-cols-2">
-          {Array.from({ length: 10 }, (_, i) => i + 1).map(slotId => {
+          {Array.from({ length: 11 }, (_, i) => i).map(slotId => {
             const slot = slots.find(s => s.id === slotId);
             const isCurrent = currentSlot === slotId;
             return (
@@ -102,36 +121,47 @@ export function SaveLoadMenu({ isOpen, onClose }: SaveLoadMenuProps) {
                 }`}
               >
                 <div className="flex items-start justify-between mb-2">
-                  <span className="font-mono text-novel-accent">Slot {slotId}</span>
+                  <span className="font-mono text-novel-accent">
+                    {slotId === 0 ? 'Tự động' : `Slot ${slotId}`}
+                  </span>
                   {isCurrent && <span className="text-xs text-novel-accent bg-novel-accent/10 px-2 py-0.5 rounded">Đang chơi</span>}
                 </div>
                 <p className="text-novel-text text-sm mb-2">{formatSlot(slot)}</p>
                 <div className="flex gap-2">
                   <button
-                    onClick={() => mode === 'save' ? handleSave(slotId) : handleLoad(slotId)}
-                    className="flex-1 py-2 px-3 rounded-lg text-sm font-medium bg-novel-accent/20 text-novel-text hover:bg-novel-accent/30"
+                    onClick={() => (mode === 'save' ? handleSave(slotId) : void handleLoad(slotId))}
+                    disabled={slotId === 0 ? mode === 'save' || !slot : mode === 'load' && !slot}
+                    className="flex-1 py-2 px-3 rounded-lg text-sm font-medium bg-novel-accent/20 text-novel-text hover:bg-novel-accent/30 disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                     {mode === 'save' ? 'Lưu' : 'Tải'}
                   </button>
                   {slot && (
+                    <button onClick={() => handleExport(slotId)} className="px-3 py-2 rounded-lg text-sm text-novel-muted hover:text-novel-text" title="Xuất file">
+                      📤
+                    </button>
+                  )}
+                  {slotId !== 0 && (
                     <>
-                      <button onClick={() => handleExport(slotId)} className="px-3 py-2 rounded-lg text-sm text-novel-muted hover:text-novel-text" title="Xuất file">
-                        📤
-                      </button>
                       <input
                         type="file"
                         accept=".json"
                         className="hidden"
                         id={`import-${slotId}`}
-                        onChange={(e) => e.target.files?.[0] && handleImport(slotId, e.target.files[0])}
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) handleImport(slotId, file);
+                          e.target.value = ''; // allow re-importing the same file
+                        }}
                       />
                       <label htmlFor={`import-${slotId}`} className="px-3 py-2 rounded-lg text-sm text-novel-muted hover:text-novel-text cursor-pointer" title="Nhập file">
                         📥
                       </label>
-                      <button onClick={() => handleDelete(slotId)} className="px-3 py-2 rounded-lg text-sm text-novel-muted hover:text-red-400" title="Xóa">
-                        🗑️
-                      </button>
                     </>
+                  )}
+                  {slot && (
+                    <button onClick={() => handleDelete(slotId)} className="px-3 py-2 rounded-lg text-sm text-novel-muted hover:text-red-400" title="Xóa">
+                      🗑️
+                    </button>
                   )}
                 </div>
               </div>

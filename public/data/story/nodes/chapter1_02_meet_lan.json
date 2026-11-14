@@ -19,7 +19,7 @@
       },
       {
         "speaker": "Tiểu Lan",
-        "text": "Tao là Tiểu Lan! Ngoại môn đệ tử, Trúc Cơ trung kỳ, ngồi cùng phòng với sư huynh sau này nha! 🎉",
+        "text": "Muội là Tiểu Lan! Đệ tử Thanh Vân Tông, Trúc Cơ trung kỳ, ngồi cùng phòng với sư huynh sau này nha! 🎉",
         "characterId": "lan",
         "expression": "lan_happy"
       },
@@ -31,7 +31,7 @@
       },
       {
         "speaker": null,
-        "text": "Cô bé vừa nói vừa tiến lại gần, mắt sáng rỡ. Đúng lúc đó, một cơn gió lớn thổi qua đường núi, tung lên một đám lá đỏ.",
+        "text": "Cô gái vừa nói vừa tiến lại gần, mắt sáng rỡ. Đúng lúc đó, một cơn gió lớn thổi qua đường núi, tung lên một đám lá đỏ.",
         "delay": 1000
       }
     ]

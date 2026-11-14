@@ -11,22 +11,26 @@ class StoryScript {
 
     try {
       const indexResponse = await fetch(assetUrl('data/story/nodes/index.json'));
-      const index: string[] = await indexResponse.json();
+      if (!indexResponse.ok) throw new Error(`Node index HTTP ${indexResponse.status}`);
+      const index = (await indexResponse.json()) as string[];
 
       await Promise.all(
         index.map(async (nodeId) => {
           const response = await fetch(assetUrl(`data/story/nodes/${nodeId}.json`));
-          if (response.ok) {
-            const node: StoryNode = await response.json();
-            this.nodes.set(nodeId, node);
+          if (!response.ok) {
+            console.error(`Failed to load node ${nodeId}: HTTP ${response.status}`);
+            return;
           }
+          const node = (await response.json()) as StoryNode;
+          this.nodes.set(nodeId, node);
         })
       );
 
+      if (this.nodes.size === 0) throw new Error('No story nodes loaded');
       this.loaded = true;
-      console.log(`Loaded ${this.nodes.size} story nodes`);
     } catch (error) {
       console.error('Failed to load story nodes:', error);
+      throw error instanceof Error ? error : new Error(String(error));
     }
   }
 

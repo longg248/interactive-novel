@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useGameStore } from '@/engine/StateManager';
+import { useUIStore } from '@/engine/UIState';
 import type { ScriptedParagraph } from '@/types';
 
 interface TextBoxProps {
@@ -9,15 +10,22 @@ interface TextBoxProps {
 }
 
 export function TextBox({ paragraphs, onComplete, onParagraphChange }: TextBoxProps) {
-  const { settings, addHistory } = useGameStore();
+  const settings = useGameStore((st) => st.settings);
+  const addHistory = useGameStore((st) => st.addHistory);
+  const isModalOpen = useUIStore(
+    (u) => u.showSaveLoad || u.showHistory || u.showSettings || u.showStats || u.showHelp
+  );
+  const modalRef = useRef(isModalOpen);
+  modalRef.current = isModalOpen;
+  const [autoMode, setAutoMode] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [displayedText, setDisplayedText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [isComplete, setIsComplete] = useState(false);
   const [showContinue, setShowContinue] = useState(false);
 
-  const typingTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
-  const autoTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
+  const typingTimeoutRef = useRef<number>();
+  const autoTimeoutRef = useRef<number>();
   const skipRef = useRef(false);
   const autoRef = useRef(false);
 
@@ -27,9 +35,11 @@ export function TextBox({ paragraphs, onComplete, onParagraphChange }: TextBoxPr
   const indexRef = useRef(currentIndex);
   const continueRef = useRef<() => void>(() => undefined);
   const completeRef = useRef(onComplete);
+  const isTypingRef = useRef(false);
   paragraphsRef.current = paragraphs;
   indexRef.current = currentIndex;
   completeRef.current = onComplete;
+  isTypingRef.current = isTyping;
 
   const currentPara = paragraphs[currentIndex];
   const textSpeed = settings.textSpeed * 20;
@@ -44,6 +54,9 @@ export function TextBox({ paragraphs, onComplete, onParagraphChange }: TextBoxPr
 
   const typeText = useCallback(
     (text: string) => {
+      clearTimeout(typingTimeoutRef.current);
+      clearTimeout(autoTimeoutRef.current);
+      skipRef.current = false;
       setIsTyping(true);
       setDisplayedText('');
 
@@ -78,6 +91,8 @@ export function TextBox({ paragraphs, onComplete, onParagraphChange }: TextBoxPr
   );
 
   const handleContinue = useCallback(() => {
+    if (modalRef.current) return; // a menu is open: don't advance the story behind it
+    if (isComplete) return; // already finished: avoid firing onComplete twice
     if (isTyping) {
       skipRef.current = true;
       return;
@@ -93,7 +108,7 @@ export function TextBox({ paragraphs, onComplete, onParagraphChange }: TextBoxPr
       setIsComplete(true);
       completeRef.current();
     }
-  }, [isTyping, onParagraphChange]);
+  }, [isTyping, isComplete, onParagraphChange]);
 
   continueRef.current = handleContinue;
 
@@ -101,7 +116,7 @@ export function TextBox({ paragraphs, onComplete, onParagraphChange }: TextBoxPr
   useEffect(() => {
     if (currentPara && currentPara.text.length > 0 && displayedText === currentPara.text) {
       addHistory({
-        sceneId: '',
+        sceneId: useGameStore.getState().currentSceneId ?? '',
         speaker: currentPara.speaker,
         text: currentPara.text,
         type: currentPara.speaker ? 'dialog' : 'narrative',
@@ -117,19 +132,32 @@ export function TextBox({ paragraphs, onComplete, onParagraphChange }: TextBoxPr
     }
   }, [currentIndex, currentPara, typeText]);
 
+  // Tell the parent which paragraph is showing (index 0 included) so it can swap sprites.
+  useEffect(() => {
+    onParagraphChange?.(currentIndex);
+  }, [currentIndex, onParagraphChange]);
+
+  // A node without text would otherwise freeze on an empty screen.
+  useEffect(() => {
+    if (paragraphs.length === 0) completeRef.current();
+  }, [paragraphs.length]);
+
   // Keyboard: Space/Enter/Right advance, S skips typing, A toggles auto.
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
         return;
       }
+      if (e.ctrlKey || e.metaKey || e.altKey || modalRef.current) return; // Ctrl+S etc. belong to the app
       if (e.code === 'Space' || e.code === 'Enter' || e.code === 'ArrowRight') {
         e.preventDefault();
         continueRef.current();
       } else if (e.code === 'KeyS') {
-        skipRef.current = true;
+        if (isTypingRef.current) skipRef.current = true;
       } else if (e.code === 'KeyA') {
         autoRef.current = !autoRef.current;
+        setAutoMode(autoRef.current);
+        if (autoRef.current && !isTypingRef.current) continueRef.current();
       }
     };
     window.addEventListener('keydown', handleKey);
@@ -169,7 +197,7 @@ export function TextBox({ paragraphs, onComplete, onParagraphChange }: TextBoxPr
             </div>
           )}
 
-          {autoRef.current && (
+          {autoMode && (
             <div className="absolute top-3 right-3 text-xs text-novel-muted flex gap-2 items-center">
               <span className="text-novel-accent">⏵ AUTO</span>
             </div>

@@ -19,7 +19,7 @@
       },
       {
         "speaker": null,
-        "text": "Ngươi đứng trước cổng núi Thanh Vân Tông, trái tim đập nhanh. Hôm nay là ngày Đại Bàn - lễ hội tuyển đệ tử hàng năm. Ngươi - một phàm nhân từ villages dưới chân núi - đã vượt qua bao thử thách để đến đây.",
+        "text": "Ngươi đứng trước cổng núi Thanh Vân Tông, trái tim đập nhanh. Hôm nay là ngày Đại Bàn - lễ hội tuyển đệ tử hàng năm. Ngươi - một phàm nhân từ ngôi làng dưới chân núi - đã vượt qua bao thử thách để đến đây.",
         "delay": 1500
       },
       {
@@ -41,17 +41,20 @@
     {
       "targetNodeId": "prologue_02_intro",
       "choiceId": "introduce_self",
-      "type": "direct"
+      "type": "direct",
+      "effects": { "flags": { "introduced_self": true }, "relationships": { "elder": 5 } }
     },
     {
       "targetNodeId": "ai_bridge_elder_reaction",
       "choiceId": "ask_question",
-      "type": "ai_bridge"
+      "type": "ai_bridge",
+      "effects": { "flags": { "asked_elder": true } }
     },
     {
       "targetNodeId": "prologue_02_silent",
       "choiceId": "stay_silent",
-      "type": "direct"
+      "type": "direct",
+      "effects": { "flags": { "stayed_silent": true } }
     }
   ],
   "conditions": [],

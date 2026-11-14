@@ -1,3 +1,5 @@
+import type { GameState, SceneData } from '@/types';
+
 export const SYSTEM_PROMPT = `Bạn là Narrator của một Visual Novel fantasy Việt Nam. Hãy kể chuyện theo phong cách văn học, giàu cảm xúc, mô tả cảnh sống động.
 
 === THẾ GIỚI (WORLD LORE) ===
@@ -23,8 +25,8 @@ export const SYSTEM_PROMPT = `Bạn là Narrator của một Visual Novel fantas
 {
   "narrative": "Mô tả cảnh + dialog NPC (có thể nhiều đoạn, cách nhau bằng \\n\\n)",
   "choices": [
-    { "id": "c1", "text": "Lựa chọn 1", "conditions": {} },
-    { "id": "c2", "text": "Lựa chọn 2", "conditions": { "type": "flag", "key": "met_elder", "operator": "eq", "value": true } }
+    { "id": "c1", "text": "Lựa chọn 1", "conditions": [] },
+    { "id": "c2", "text": "Lựa chọn 2", "conditions": [{ "type": "flag", "key": "met_elder", "operator": "eq", "value": true }] }
   ],
   "stateChanges": {
     "variables": { "cultivation_exp": 10 },
@@ -39,20 +41,30 @@ export const SYSTEM_PROMPT = `Bạn là Narrator của một Visual Novel fantas
   }
 }`;
 
-export function buildUserPrompt(gameState: any, sceneContext?: any, playerInput?: string): string {
+export function buildUserPrompt(
+  gameState: GameState,
+  sceneContext?: SceneData,
+  playerInput?: string
+): string {
+  const inventory = gameState.inventory.map((i) => `${i.name} x${i.quantity}`);
+  const recent = gameState.history
+    .slice(-5)
+    .map((h) => `${h.speaker ?? 'Narrator'}: ${h.text}`)
+    .join('\n');
+
   return `
 === TRẠNG THÁI HIỆN TẠI ===
 Chương: ${gameState.chapter}
-Scene: ${gameState.currentSceneId}
+Scene: ${gameState.currentSceneId ?? 'chưa có'}
 Playtime: ${Math.floor(gameState.playtime / 60)} phút
 
 Biến số: ${JSON.stringify(gameState.variables)}
 Flags: ${JSON.stringify(gameState.flags)}
 Mối quan hệ: ${JSON.stringify(gameState.relationships)}
-Túi đồ: ${JSON.stringify(gameState.inventory.map((i: any) => `${i.name} x${i.quantity}`))}
+Túi đồ: ${JSON.stringify(inventory)}
 
 === LỊCH SỬ GẦN ĐÂY (5 entry cuối) ===
-${gameState.history.slice(-5).map((h: any) => `${h.speaker || 'Narrator'}: ${h.text}`).join('\n')}
+${recent}
 
 === SCENE HIỆN TẠI ===
 ${sceneContext ? JSON.stringify(sceneContext) : 'Không có'}

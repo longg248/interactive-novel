@@ -6,18 +6,28 @@ class AssetLoader {
   private cache: Map<string, HTMLImageElement | HTMLAudioElement> = new Map();
   private loadingPromises: Map<string, Promise<void>> = new Map();
 
-  async loadManifest(): Promise<AssetManifest> {
-    const response = await fetch(assetUrl('assets/manifest.json'));
-    if (!response.ok) throw new Error('Failed to load asset manifest');
-    this.manifest = await response.json();
-    return this.manifest!;
+  private manifestPromise: Promise<AssetManifest> | null = null;
+
+  loadManifest(): Promise<AssetManifest> {
+    if (this.manifestPromise) return this.manifestPromise;
+    this.manifestPromise = (async () => {
+      const response = await fetch(assetUrl('assets/manifest.json'));
+      if (!response.ok) throw new Error('Failed to load asset manifest');
+      const manifest = (await response.json()) as AssetManifest;
+      this.manifest = manifest;
+      return manifest;
+    })().catch((e: unknown) => {
+      this.manifestPromise = null; // allow retry
+      throw e instanceof Error ? e : new Error(String(e));
+    });
+    return this.manifestPromise;
   }
 
   getManifest(): AssetManifest | null {
     return this.manifest;
   }
 
-  getPath(type: keyof AssetManifest['backgrounds'], key: string): string {
+  getPath(type: 'backgrounds' | 'sprites' | 'bgm' | 'sfx', key: string): string {
     if (!this.manifest) return '';
     const category = type === 'bgm' || type === 'sfx' ? 'audio' : type;
     const map = this.manifest[category as keyof AssetManifest] as Record<string, string>;

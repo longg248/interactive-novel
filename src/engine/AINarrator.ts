@@ -1,21 +1,72 @@
 import { SYSTEM_PROMPT, buildUserPrompt } from './prompts';
-import type { GameState, AINarratorResponse, SceneData } from '@/types';
+import type {
+  GameState,
+  AINarratorResponse,
+  SceneData,
+  Choice,
+  Condition,
+  StateChanges,
+} from '@/types';
 
 const GEMINI_API_BASE = 'https://generativelanguage.googleapis.com/v1beta/models';
 
 /**
- * Model used for narration. Older models (gemini-1.5-flash, gemini-2.x-flash)
- * are retired for new API keys and answer with 404, so the default is a
- * current flash-lite build. Override with VITE_GEMINI_MODEL in .env.
+ * Default narration model. Google's deprecations page lists a shutdown date for
+ * gemini-3.1-flash-lite (May 7, 2027) and newer flash models exist, so always
+ * set VITE_GEMINI_MODEL explicitly and re-check
+ * https://ai.google.dev/gemini-api/docs/deprecations before that date.
  */
 const DEFAULT_MODEL = 'gemini-3.1-flash-lite';
 
+const REQUEST_TIMEOUT_MS = 30000;
+const MAX_ATTEMPTS = 3;
+
+interface GeminiPart {
+  text?: string;
+  thought?: boolean;
+}
+
 interface GeminiResponse {
-  candidates: Array<{
-    content: {
-      parts: Array<{ text: string }>;
-    };
+  candidates?: Array<{
+    content?: { parts?: GeminiPart[] };
+    finishReason?: string;
   }>;
+  promptFeedback?: { blockReason?: string };
+}
+
+class HttpError extends Error {
+  constructor(public status: number, message: string) {
+    super(message);
+  }
+}
+
+const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
+
+function asRecord(v: unknown): Record<string, unknown> {
+  return v && typeof v === 'object' && !Array.isArray(v) ? (v as Record<string, unknown>) : {};
+}
+
+/** The model sometimes returns `conditions: {}` or a single object - always give back an array. */
+function normalizeConditions(raw: unknown): Condition[] {
+  if (Array.isArray(raw)) return raw.filter((c): c is Condition => !!c && typeof c === 'object' && 'key' in c);
+  const rec = asRecord(raw);
+  return 'type' in rec && 'key' in rec ? [rec as unknown as Condition] : [];
+}
+
+function normalizeChoices(raw: unknown): Choice[] {
+  if (!Array.isArray(raw)) return [];
+  const out: Choice[] = [];
+  raw.forEach((item, idx) => {
+    const c = asRecord(item);
+    const text = typeof c.text === 'string' ? c.text.trim() : '';
+    if (!text) return;
+    out.push({
+      id: typeof c.id === 'string' && c.id ? c.id : `ai_choice_${idx + 1}`,
+      text,
+      conditions: normalizeConditions(c.conditions),
+    });
+  });
+  return out.slice(0, 4);
 }
 
 class AINarrator {
@@ -27,7 +78,7 @@ class AINarrator {
     this.apiKey = import.meta.env.VITE_GEMINI_API_KEY || '';
     this.model = import.meta.env.VITE_GEMINI_MODEL || DEFAULT_MODEL;
     if (!this.apiKey) {
-      console.warn('VITE_GEMINI_API_KEY not set. AI Narrator will not work.');
+      console.warn('VITE_GEMINI_API_KEY not set. AI Narrator will use the offline fallback.');
     }
   }
 
@@ -37,93 +88,117 @@ class AINarrator {
     playerInput?: string
   ): Promise<AINarratorResponse> {
     if (!this.apiKey) {
-      return this.getFallbackResponse();
+      return this.getFallbackResponse('Chưa cấu hình API key');
     }
 
-    this.abortController = new AbortController();
-    const timeoutId = setTimeout(() => this.abortController?.abort(), 30000);
+    let lastError = 'Unknown error';
+    for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+      try {
+        const text = await this.request(buildUserPrompt(gameState, sceneContext, playerInput));
+        return this.parseResponse(text);
+      } catch (error) {
+        lastError = error instanceof Error ? error.message : String(error);
+        console.error(`AI Narrator attempt ${attempt}/${MAX_ATTEMPTS} failed:`, error);
+        const retryable =
+          error instanceof HttpError
+            ? error.status === 429 || error.status >= 500
+            : !(error instanceof Error && error.name === 'AbortError'); // timeout/cancel: don't retry
+        if (!retryable || attempt === MAX_ATTEMPTS) break;
+        await sleep(800 * 2 ** (attempt - 1)); // 0.8s, 1.6s
+      }
+    }
+    return this.getFallbackResponse(lastError);
+  }
+
+  private async request(userPrompt: string): Promise<string> {
+    const controller = new AbortController();
+    this.abortController = controller;
+    const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 
     try {
-      const response = await fetch(
-        `${GEMINI_API_BASE}/${this.model}:generateContent?key=${this.apiKey}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [
-              { role: 'user', parts: [{ text: SYSTEM_PROMPT }] },
-              {
-                role: 'model',
-                parts: [{ text: 'Hiểu rồi. Tôi sẽ trả về JSON theo format yêu cầu.' }],
-              },
-              { role: 'user', parts: [{ text: buildUserPrompt(gameState, sceneContext, playerInput) }] },
-            ],
-            generationConfig: {
-              temperature: 0.8,
-              topK: 40,
-              topP: 0.95,
-              maxOutputTokens: 4096,
-              responseMimeType: 'application/json',
-            },
-            safetySettings: [
-              { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
-              { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
-              { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
-              { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
-            ],
-          }),
-          signal: this.abortController.signal,
-        }
-      );
-
-      clearTimeout(timeoutId);
+      const response = await fetch(`${GEMINI_API_BASE}/${this.model}:generateContent`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          // Key in a header instead of the URL so it does not end up in logs/history.
+          'x-goog-api-key': this.apiKey,
+        },
+        body: JSON.stringify({
+          systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
+          contents: [{ role: 'user', parts: [{ text: userPrompt }] }],
+          generationConfig: {
+            temperature: 0.8,
+            topK: 40,
+            topP: 0.95,
+            maxOutputTokens: 4096,
+            responseMimeType: 'application/json',
+          },
+          safetySettings: [
+            { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
+            { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
+            { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
+            { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
+          ],
+        }),
+        signal: controller.signal,
+      });
 
       if (!response.ok) {
-        if (response.status === 429) throw new Error('RATE_LIMIT');
+        if (response.status === 429) throw new HttpError(429, 'RATE_LIMIT (429)');
         if (response.status === 404) {
-          throw new Error(`Model "${this.model}" không tồn tại (404) - kiểm tra lại VITE_GEMINI_MODEL`);
+          throw new HttpError(404, `Model "${this.model}" không tồn tại (404) - kiểm tra VITE_GEMINI_MODEL`);
         }
-        throw new Error(`API error: ${response.status}`);
+        throw new HttpError(response.status, `API error: ${response.status}`);
       }
 
-      const data: GeminiResponse = await response.json();
-      const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-
+      const data = (await response.json()) as GeminiResponse;
+      if (data.promptFeedback?.blockReason) {
+        throw new HttpError(400, `Bị chặn bởi bộ lọc: ${data.promptFeedback.blockReason}`);
+      }
+      // Skip "thought" parts (thinking models) and join the rest.
+      const text = (data.candidates?.[0]?.content?.parts ?? [])
+        .filter((p) => !p.thought && typeof p.text === 'string')
+        .map((p) => p.text as string)
+        .join('');
       if (!text) throw new Error('Empty response');
-
-      return this.parseResponse(text);
-    } catch (error) {
+      return text;
+    } finally {
       clearTimeout(timeoutId);
-      console.error('AI Narrator error:', error);
-      return this.getFallbackResponse(error instanceof Error ? error.message : 'Unknown error');
+      if (this.abortController === controller) this.abortController = null;
     }
   }
 
   private parseResponse(text: string): AINarratorResponse {
-    try {
-      const jsonMatch = text.match(/```json\n([\s\S]*?)\n```/) || text.match(/\{[\s\S]*\}/);
-      const jsonText = jsonMatch ? jsonMatch[1] || jsonMatch[0] : text;
-      const parsed = JSON.parse(jsonText);
+    const fenced = /```(?:json)?\s*([\s\S]*?)```/.exec(text);
+    const braces = /\{[\s\S]*\}/.exec(text);
+    const jsonText = fenced?.[1] ?? braces?.[0] ?? text;
 
-      return {
-        narrative: parsed.narrative || '...',
-        choices: Array.isArray(parsed.choices) ? parsed.choices : [],
-        stateChanges: parsed.stateChanges || {},
-        sceneData: parsed.sceneData || {},
-        internalMonologue: parsed.internalMonologue,
-      };
+    let parsed: Record<string, unknown>;
+    try {
+      parsed = asRecord(JSON.parse(jsonText));
     } catch (e) {
       console.error('Failed to parse AI response:', e, text);
-      return this.getFallbackResponse('Parse error');
+      throw new Error('Parse error');
     }
+
+    const narrative = typeof parsed.narrative === 'string' ? parsed.narrative.trim() : '';
+    if (!narrative) throw new Error('Missing narrative');
+
+    return {
+      narrative,
+      choices: normalizeChoices(parsed.choices),
+      stateChanges: asRecord(parsed.stateChanges) as StateChanges,
+      sceneData: asRecord(parsed.sceneData) as Partial<SceneData>,
+      internalMonologue:
+        typeof parsed.internalMonologue === 'string' ? parsed.internalMonologue : undefined,
+    };
   }
 
   private getFallbackResponse(error?: string): AINarratorResponse {
+    const base =
+      'Gió rít qua khe cửa sổ cổ, mang theo mùi hương thảo dược nhẹ nhàng. Lão Tổ ngồi đối diện, ánh mắt sâu thẳm như biển lớn quan sát từng động tác của ngươi.';
     return {
-      narrative: error
-        ? `[Hệ thống: AI Narrator tạm thời không khả dụng (${error}). Vui lòng thử lại sau.]
-        \n\nGió rít qua khe cửa sổ cổ, mang theo mùi hương thảo dược nhẹ nhàng. Lão Tổ ngồi đối diện, ánh mắt sâu thẳm như biển lớn quan sát từng động tác của ngươi.`
-        : 'Gió rít qua khe cửa sổ cổ, mang theo mùi hương thảo dược nhẹ nhàng. Lão Tổ ngồi đối diện, ánh mắt sâu thẳm như biển lớn quan sát từng động tác của ngươi.',
+      narrative: error ? `[Hệ thống: AI Narrator tạm thời không khả dụng (${error}).]\n\n${base}` : base,
       choices: [
         { id: 'wait', text: 'Đứng im lặng chờ Lão Tổ nói', conditions: [] },
         { id: 'ask', text: 'Hỏi: "Lão Tổ kêu ta đến có việc gì?"', conditions: [] },
@@ -131,11 +206,14 @@ class AINarrator {
       ],
       stateChanges: {},
       sceneData: {},
+      isFallback: true,
+      errorMessage: error,
     };
   }
 
   cancel(): void {
     this.abortController?.abort();
+    this.abortController = null;
   }
 }
 

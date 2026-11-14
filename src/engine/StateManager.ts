@@ -52,15 +52,54 @@ interface GameStore extends GameState {
 
   // Save/Load
   saveMetadata: SaveMetadata;
-  saveGame: (slotId: number, screenshot?: string) => void;
+  saveGame: (slotId: number, screenshot?: string) => boolean;
   loadGame: (slotId: number) => boolean;
   deleteSave: (slotId: number) => void;
   exportSave: (slotId: number) => string; // JSON string
   importSave: (json: string, slotId: number) => boolean;
+  refreshSlots: () => void;
 
   // Reset
   newGame: () => void;
   resetAll: () => void;
+}
+
+const SAVE_VERSION = '1.0.0';
+const MAX_SLOT_ID = 10; // slot 0 = autosave, 1..10 = manual
+
+function isValidSlot(v: unknown): v is SaveSlot {
+  if (!v || typeof v !== 'object') return false;
+  const s = v as Partial<SaveSlot>;
+  const st = s.state as Partial<GameState> | undefined;
+  return (
+    typeof s.id === 'number' &&
+    typeof s.timestamp === 'number' &&
+    !!st &&
+    typeof st === 'object' &&
+    typeof st.variables === 'object' && st.variables !== null &&
+    typeof st.flags === 'object' && st.flags !== null &&
+    typeof st.relationships === 'object' && st.relationships !== null &&
+    Array.isArray(st.inventory) &&
+    Array.isArray(st.history) &&
+    typeof st.playtime === 'number' &&
+    typeof st.chapter === 'string'
+  );
+}
+
+/** Read every save_slot_N from localStorage (slot list is not persisted by zustand). */
+function readSlotsFromStorage(): SaveSlot[] {
+  const slots: SaveSlot[] = [];
+  try {
+    for (let id = 0; id <= MAX_SLOT_ID; id++) {
+      const raw = localStorage.getItem(`save_slot_${id}`);
+      if (!raw) continue;
+      const parsed: unknown = JSON.parse(raw);
+      if (isValidSlot(parsed)) slots.push({ ...parsed, id });
+    }
+  } catch (e) {
+    console.warn('Could not read save slots:', e);
+  }
+  return slots;
 }
 
 export const useGameStore = create<GameStore>()(
@@ -85,7 +124,7 @@ export const useGameStore = create<GameStore>()(
         language: 'vi',
       },
       assetManifest: null,
-      saveMetadata: { slots: [], currentSlot: null, version: '1.0.0' },
+      saveMetadata: { slots: readSlotsFromStorage(), currentSlot: null, version: SAVE_VERSION },
 
       // Settings
       setSettings: (newSettings) => set((state) => ({
@@ -199,12 +238,13 @@ export const useGameStore = create<GameStore>()(
       // Save/Load
       saveGame: (slotId, screenshot) => {
         const state = get();
+        if (!state.currentSceneId) return false; // nothing to save yet
         const slot: SaveSlot = {
           id: slotId,
           timestamp: Date.now(),
           playtime: state.playtime,
           chapter: state.chapter,
-          sceneId: state.currentSceneId ?? '',
+          sceneId: state.currentSceneId,
           screenshot,
           state: {
             variables: state.variables,
@@ -216,13 +256,26 @@ export const useGameStore = create<GameStore>()(
             playtime: state.playtime,
             chapter: state.chapter,
           },
-          version: '1.0.0',
+          version: SAVE_VERSION,
         };
+        try {
+          localStorage.setItem(`save_slot_${slotId}`, JSON.stringify(slot));
+        } catch (e) {
+          // Quota exceeded / storage blocked: report instead of pretending it worked.
+          console.error('Save failed:', e);
+          return false;
+        }
         set((s) => {
-          const slots = [...s.saveMetadata.slots.filter(s => s.id !== slotId), slot].sort((a, b) => a.id - b.id);
-          return { saveMetadata: { ...s.saveMetadata, slots, currentSlot: slotId } };
+          const slots = [...s.saveMetadata.slots.filter((x) => x.id !== slotId), slot].sort((a, b) => a.id - b.id);
+          return {
+            saveMetadata: {
+              ...s.saveMetadata,
+              slots,
+              // Autosave (slot 0) must not change which manual slot is "current".
+              currentSlot: slotId === 0 ? s.saveMetadata.currentSlot : slotId,
+            },
+          };
         });
-        localStorage.setItem(`save_slot_${slotId}`, JSON.stringify(slot));
         return true;
       },
 
@@ -230,7 +283,8 @@ export const useGameStore = create<GameStore>()(
         try {
           const saved = localStorage.getItem(`save_slot_${slotId}`);
           if (!saved) return false;
-          const slot: SaveSlot = JSON.parse(saved);
+          const slot = JSON.parse(saved) as unknown;
+          if (!isValidSlot(slot)) return false;
 
           // Migration logic for future versions
           if (slot.version !== '1.0.0') {
@@ -249,7 +303,10 @@ export const useGameStore = create<GameStore>()(
             history: slot.state.history,
             playtime: slot.state.playtime,
             chapter: slot.state.chapter,
-            saveMetadata: { ...get().saveMetadata, currentSlot: slotId },
+            saveMetadata: {
+              ...get().saveMetadata,
+              currentSlot: slotId === 0 ? get().saveMetadata.currentSlot : slotId,
+            },
           });
           return true;
         } catch {
@@ -275,12 +332,14 @@ export const useGameStore = create<GameStore>()(
 
       importSave: (json, slotId) => {
         try {
-          const slot: SaveSlot = JSON.parse(json);
+          const parsed: unknown = JSON.parse(json);
+          if (!isValidSlot(parsed)) return false;
+          const slot: SaveSlot = { ...parsed, id: slotId, version: SAVE_VERSION };
           localStorage.setItem(`save_slot_${slotId}`, JSON.stringify(slot));
           set((s) => ({
             saveMetadata: {
               ...s.saveMetadata,
-              slots: [...s.saveMetadata.slots.filter(s => s.id !== slotId), slot].sort((a, b) => a.id - b.id),
+              slots: [...s.saveMetadata.slots.filter((x) => x.id !== slotId), slot].sort((a, b) => a.id - b.id),
             },
           }));
           return true;
@@ -288,6 +347,8 @@ export const useGameStore = create<GameStore>()(
           return false;
         }
       },
+
+      refreshSlots: () => set((s) => ({ saveMetadata: { ...s.saveMetadata, slots: readSlotsFromStorage() } })),
 
       // Reset
       newGame: () => set((state) => ({
@@ -304,7 +365,10 @@ export const useGameStore = create<GameStore>()(
       })),
 
       resetAll: () => {
-        localStorage.clear();
+        try {
+          for (let id = 0; id <= MAX_SLOT_ID; id++) localStorage.removeItem(`save_slot_${id}`);
+          localStorage.removeItem('novel-game-store');
+        } catch { /* storage unavailable */ }
         set({
           variables: {},
           flags: {},

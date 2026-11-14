@@ -7,46 +7,39 @@ interface CharacterProps {
   className?: string;
 }
 
-const POSITION_STYLES: Record<CharacterSprite['position'], string> = {
-  left: 'left-1/12',
-  center: 'left-1/2',
-  right: 'right-1/12',
-  hidden: 'opacity-0 pointer-events-none',
+// Inline positioning: Tailwind has no `left-1/12`, so the old classes did nothing.
+const POSITION_STYLE: Record<CharacterSprite['position'], React.CSSProperties> = {
+  left: { left: '8%' },
+  center: { left: '50%', transform: 'translateX(-50%)' },
+  right: { right: '8%' },
+  hidden: { left: '50%', transform: 'translateX(-50%)' },
 };
 
-const POSITION_TRANSFORMS: Record<CharacterSprite['position'], string> = {
-  left: '-translate-x-0',
-  center: '-translate-x-1/2',
-  right: '-translate-x-0',
-  hidden: '-translate-x-0',
-};
-
-export function Character({ character, className }: CharacterProps) {
+export function Character({ character, className = '' }: CharacterProps) {
   const spriteSrc = useSprite(character.sprite);
-  const [opacity, setOpacity] = useState(character.position === 'hidden' ? 0 : 1);
-  const [transform, setTransform] = useState(POSITION_TRANSFORMS[character.position]);
+  const [failed, setFailed] = useState(false);
+  const [visible, setVisible] = useState(false);
 
+  // New image => forget a previous load error; fade in on mount.
   useEffect(() => {
-    if (character.animation === 'fade') {
-      setOpacity(character.position === 'hidden' ? 0 : 1);
-    } else if (character.animation === 'slide') {
-      setTransform(POSITION_TRANSFORMS[character.position]);
-    } else {
-      setOpacity(character.position === 'hidden' ? 0 : 1);
-      setTransform(POSITION_TRANSFORMS[character.position]);
-    }
-  }, [character.position, character.animation]);
+    setFailed(false);
+  }, [spriteSrc]);
+  useEffect(() => {
+    const t = requestAnimationFrame(() => setVisible(true));
+    return () => cancelAnimationFrame(t);
+  }, []);
 
-  if (!spriteSrc || character.position === 'hidden') return null;
+  if (!spriteSrc || failed || character.position === 'hidden') return null;
 
   return (
     <div
-      className={`absolute bottom-0 z-20 transition-all duration-300 ease-out ${POSITION_STYLES[character.position]} ${className}`}
-      style={{ opacity, transform: `translateX(${transform})` }}
+      className={`absolute bottom-0 z-20 transition-opacity duration-300 ease-out ${className}`}
+      style={{ ...POSITION_STYLE[character.position], opacity: visible ? 1 : 0 }}
     >
       <img
         src={spriteSrc}
         alt={character.id}
+        onError={() => setFailed(true)}
         className="max-h-[70vh] object-contain filter drop-shadow-2xl"
       />
     </div>

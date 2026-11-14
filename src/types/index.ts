@@ -92,6 +92,10 @@ export interface AINarratorResponse {
   stateChanges: StateChanges;
   sceneData: Partial<SceneData>;
   internalMonologue?: string; // for debugging
+  /** true when the response is the built-in fallback (AI unavailable) */
+  isFallback?: boolean;
+  /** error message when isFallback is true */
+  errorMessage?: string;
 }
 
 export interface StateChanges {
@@ -137,6 +141,7 @@ export interface NodeTransition {
   text?: string; // label shown on the choice button
   conditions?: Condition[];
   type: 'direct' | 'ai_bridge'; // ai_bridge = AI generates transition
+  effects?: StateChanges; // applied when this transition is taken
 }
 
 // Save System
