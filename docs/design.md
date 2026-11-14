@@ -110,7 +110,7 @@ src/
 ```
 
 ## API Integration (Gemini)
-- Endpoint: `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent`
+- Endpoint: `https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent` (model mặc định `gemini-3.1-flash-lite`, đổi qua `VITE_GEMINI_MODEL`)
 - Key stored in `.env` (VITE_GEMINI_API_KEY)
 - Request: system prompt + conversation history + current state
 - Response parsing: strict JSON, fallback to text if parse fails

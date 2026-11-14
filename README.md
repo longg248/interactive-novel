@@ -1,13 +1,13 @@
 # Interactive Visual Novel
 
-Personal-use Visual Novel engine with AI Narrator (Gemini 1.5 Flash) for deep branching stories.
+Personal-use Visual Novel engine with AI Narrator (Gemini 3.1 Flash Lite) for deep branching stories.
 
 ## Features
 - Visual Novel UI: backgrounds, character sprites, textbox, choices
 - Hybrid story: scripted nodes + AI improvisation
 - Deep branching with variables, flags, relationships, inventory
 - Save/Load system (10 slots + export/import JSON)
-- AI Narrator via Gemini 1.5 Flash API
+- AI Narrator via Gemini 3.1 Flash Lite API
 - Auto-save, history log, stats panel
 - Keyboard shortcuts, settings, accessibility
 
@@ -33,6 +33,28 @@ npm run preview
 1. Go to [Google AI Studio](https://aistudio.google.com/)
 2. Create API key
 3. Add to `.env`
+
+### Model
+Model mặc định là `gemini-3.1-flash-lite`. Đổi qua `VITE_GEMINI_MODEL` trong `.env`.
+Các model cũ như `gemini-1.5-flash` và `gemini-2.x-flash` đã bị retire cho API key mới
+ và sẽ trả về 404. Xem danh sách model còn hoạt động:
+
+```bash
+curl "https://generativelanguage.googleapis.com/v1beta/models?pageSize=100" -H "x-goog-api-key: $KEY"
+```
+
+### Deploy lên GitHub Pages
+Key được inject lúc build từ Actions secret, nên **key nằm trong bundle JS công khai** -
+ai mở DevTools trên site đều đọc được. Với mức dùng cá nhân và free tier thì chấp nhận
+được, nhưng nếu muốn che key thì cần một proxy server-side (Cloudflare Worker, Vercel
+function) thay vì GitHub Pages.
+
+Tạo secret trong repo:
+
+```bash
+gh secret set VITE_GEMINI_API_KEY --repo <owner>/<repo>
+gh variable set VITE_GEMINI_MODEL --body "gemini-3.1-flash-lite" --repo <owner>/<repo>
+```
 
 ## Project Structure
 ```
