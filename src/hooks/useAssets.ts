@@ -32,13 +32,7 @@ export function useAssets() {
   }, [setAssetManifest]);
 
   const preloadScene = async (sceneData: { background?: string; characters?: Array<{ sprite: string }>; bgm?: string }) => {
-    const promises: Promise<void>[] = [];
-    if (sceneData.background) promises.push(assetLoader.loadImage(assetLoader.getPath('backgrounds', sceneData.background)));
-    if (sceneData.characters) {
-      sceneData.characters.forEach(c => promises.push(assetLoader.loadImage(assetLoader.getPath('sprites', c.sprite))));
-    }
-    if (sceneData.bgm) promises.push(assetLoader.loadAudio(assetLoader.getPath('bgm', sceneData.bgm)));
-    await Promise.all(promises);
+    await assetLoader.preloadScene(sceneData);
   };
 
   return { manifest, loading, error, preloadScene, assetLoader };

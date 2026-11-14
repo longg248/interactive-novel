@@ -47,6 +47,26 @@ class AssetLoader {
     return this._loadAudio(src);
   }
 
+  async preloadScene(sceneData: {
+    background?: string;
+    characters?: Array<{ sprite: string }>;
+    bgm?: string;
+  }): Promise<void> {
+    const promises: Promise<void>[] = [];
+    if (sceneData.background) {
+      promises.push(this._loadImage(this.getPath('backgrounds', sceneData.background)));
+    }
+    if (sceneData.characters) {
+      sceneData.characters.forEach(c => {
+        promises.push(this._loadImage(this.getPath('sprites', c.sprite)));
+      });
+    }
+    if (sceneData.bgm) {
+      promises.push(this._loadAudio(this.getPath('bgm', sceneData.bgm)));
+    }
+    await Promise.all(promises);
+  }
+
   private _loadImage(src: string): Promise<void> {
     if (!src) return Promise.resolve();
     if (this.cache.has(src)) return Promise.resolve();
