@@ -32,6 +32,12 @@ jobs:
 
       - name: Build
         run: npm run build
+        env:
+          # Injected at build time so the AI Narrator works on the deployed site.
+          # NOTE: Vite inlines VITE_* vars into the bundle, so this key is
+          # readable by anyone who opens devtools on the published site.
+          VITE_GEMINI_API_KEY: ${{ secrets.VITE_GEMINI_API_KEY }}
+          VITE_GEMINI_MODEL: ${{ vars.VITE_GEMINI_MODEL || 'gemini-3.1-flash-lite' }}
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
