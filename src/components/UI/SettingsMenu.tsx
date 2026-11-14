@@ -1,8 +1,11 @@
-import { useState } from 'react';
 import { useGameStore } from '@/engine/StateManager';
 
-export function SettingsMenu() {
-  const [isOpen, setIsOpen] = useState(false);
+interface SettingsMenuProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+export function SettingsMenu({ isOpen, onClose }: SettingsMenuProps) {
   const { settings, setSettings } = useGameStore((s) => ({
     settings: s.settings,
     setSettings: s.setSettings,
@@ -12,11 +15,11 @@ export function SettingsMenu() {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 novel-bg/95 backdrop-blur-sm">
-      <div className="absolute inset-0" onClick={() => setIsOpen(false)} />
+      <div className="absolute inset-0" onClick={onClose} />
       <div className="relative z-10 w-full max-w-md novel-panel rounded-2xl border border-novel-accent/30 p-6">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-serif text-novel-text">Cài đặt</h2>
-          <button onClick={() => setIsOpen(false)} className="p-2 rounded-lg hover:bg-novel-bg/50 text-novel-muted">✕</button>
+          <button onClick={onClose} className="p-2 rounded-lg hover:bg-novel-bg/50 text-novel-muted">✕</button>
         </div>
 
         <div className="space-y-6">

@@ -1,8 +1,9 @@
-import { useState } from 'react';
+interface HelpModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
 
-export function HelpModal() {
-  const [isOpen, setIsOpen] = useState(false);
-
+export function HelpModal({ isOpen, onClose }: HelpModalProps) {
   const shortcuts = [
     { key: 'Space / Enter / →', action: 'Tiếp tục / Chọn' },
     { key: 'S', action: 'Bỏ qua văn bản (Skip)' },
@@ -17,11 +18,11 @@ export function HelpModal() {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 novel-bg/95 backdrop-blur-sm">
-      <div className="absolute inset-0" onClick={() => setIsOpen(false)} />
+      <div className="absolute inset-0" onClick={onClose} />
       <div className="relative z-10 w-full max-w-md novel-panel rounded-2xl border border-novel-accent/30 p-6">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-serif text-novel-text">Phím tắt</h2>
-          <button onClick={() => setIsOpen(false)} className="p-2 rounded-lg hover:bg-novel-bg/50 text-novel-muted">✕</button>
+          <button onClick={onClose} className="p-2 rounded-lg hover:bg-novel-bg/50 text-novel-muted">✕</button>
         </div>
         <dl className="space-y-3">
           {shortcuts.map(({ key, action }) => (

@@ -3,6 +3,8 @@ import { SceneContainer, TransitionOverlay } from '@/components/Scene';
 import { TopBar, SaveLoadMenu, HistoryLog, SettingsMenu, StatsPanel, HelpModal } from '@/components/UI';
 import { useGameStore } from '@/engine/StateManager';
 import { useAutoSave } from '@/hooks/useAutoSave';
+import { useUIStore } from '@/engine/UIState';
+import { useEffect } from 'react';
 
 export function Layout() {
   useAutoSave();
@@ -16,18 +18,61 @@ export function Layout() {
     selectChoice,
   } = useSceneManager();
 
+  const {
+    showSaveLoad,
+    showHistory,
+    showSettings,
+    showStats,
+    showHelp,
+    openSaveLoad,
+    openHistory,
+    openSettings,
+    openStats,
+    openHelp,
+    closeAll,
+  } = useUIStore();
+
   const scriptedContent = displayedParagraphs.length > 0
     ? displayedParagraphs
     : currentParagraph ? [currentParagraph] : [];
 
+  // Global keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't trigger shortcuts when typing in inputs
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+        return;
+      }
+
+      if (e.ctrlKey && e.key === 's') {
+        e.preventDefault();
+        openSaveLoad();
+      }
+      if (e.key === 'Escape') {
+        closeAll();
+      }
+      if (e.key === 'h' || e.key === 'H') {
+        if (!showSaveLoad && !showSettings && !showStats) {
+          openHistory();
+        }
+      }
+      if (e.key === '?') {
+        openHelp();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [showSaveLoad, showSettings, showStats, openSaveLoad, openHistory, openSettings, openStats, openHelp, closeAll]);
+
   return (
     <div className="relative w-full h-screen novel-bg overflow-hidden">
       <TopBar
-        onSave={() => {}}
-        onLoad={() => {}}
-        onSettings={() => {}}
-        onHistory={() => {}}
-        onStats={() => {}}
+        onSave={openSaveLoad}
+        onLoad={openSaveLoad}
+        onSettings={openSettings}
+        onHistory={openHistory}
+        onStats={openStats}
       />
 
       {phase !== 'loading' && (
@@ -51,11 +96,11 @@ export function Layout() {
       )}
 
       <TransitionOverlay />
-      <SaveLoadMenu />
-      <HistoryLog />
-      <SettingsMenu />
-      <StatsPanel />
-      <HelpModal />
+      <SaveLoadMenu isOpen={showSaveLoad} onClose={() => useUIStore.getState().closeSaveLoad()} />
+      <HistoryLog isOpen={showHistory} onClose={() => useUIStore.getState().closeHistory()} />
+      <SettingsMenu isOpen={showSettings} onClose={() => useUIStore.getState().closeSettings()} />
+      <StatsPanel isOpen={showStats} onClose={() => useUIStore.getState().closeStats()} />
+      <HelpModal isOpen={showHelp} onClose={() => useUIStore.getState().closeHelp()} />
     </div>
   );
 }

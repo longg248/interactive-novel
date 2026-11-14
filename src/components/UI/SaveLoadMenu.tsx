@@ -2,8 +2,12 @@ import { useState } from 'react';
 import { useGameStore } from '@/engine/StateManager';
 import type { SaveSlot } from '@/types';
 
-export function SaveLoadMenu() {
-  const [isOpen, setIsOpen] = useState(false);
+interface SaveLoadMenuProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+export function SaveLoadMenu({ isOpen, onClose }: SaveLoadMenuProps) {
   const [mode, setMode] = useState<'save' | 'load'>('save');
   const { saveMetadata, saveGame, loadGame, deleteSave, exportSave, importSave } = useGameStore();
 
@@ -19,12 +23,12 @@ export function SaveLoadMenu() {
 
   const handleSave = (slotId: number) => {
     saveGame(slotId);
-    setIsOpen(false);
+    onClose();
   };
 
   const handleLoad = (slotId: number) => {
     if (loadGame(slotId)) {
-      setIsOpen(false);
+      onClose();
     }
   };
 
@@ -61,7 +65,7 @@ export function SaveLoadMenu() {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 novel-bg/95 backdrop-blur-sm">
-      <div className="absolute inset-0" onClick={() => setIsOpen(false)} />
+      <div className="absolute inset-0" onClick={onClose} />
       <div className="relative z-10 w-full max-w-2xl max-h-[80vh] overflow-y-auto novel-panel rounded-2xl border border-novel-accent/30 p-6">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-2xl font-serif text-novel-text">
@@ -80,7 +84,7 @@ export function SaveLoadMenu() {
             >
               Tải
             </button>
-            <button onClick={() => setIsOpen(false)} className="p-2 rounded-lg hover:bg-novel-bg/50 text-novel-muted">
+            <button onClick={onClose} className="p-2 rounded-lg hover:bg-novel-bg/50 text-novel-muted">
               ✕
             </button>
           </div>

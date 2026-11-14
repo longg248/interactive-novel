@@ -1,8 +1,11 @@
-import { useState } from 'react';
 import { useGameStore } from '@/engine/StateManager';
 
-export function HistoryLog() {
-  const [isOpen, setIsOpen] = useState(false);
+interface HistoryLogProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+export function HistoryLog({ isOpen, onClose }: HistoryLogProps) {
   const { history, clearHistory } = useGameStore();
 
   const reversedHistory = [...history].reverse();
@@ -11,7 +14,7 @@ export function HistoryLog() {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 novel-bg/95 backdrop-blur-sm">
-      <div className="absolute inset-0" onClick={() => setIsOpen(false)} />
+      <div className="absolute inset-0" onClick={onClose} />
       <div className="relative z-10 w-full max-w-3xl max-h-[80vh] overflow-hidden novel-panel rounded-2xl border border-novel-accent/30 flex flex-col">
         <div className="flex items-center justify-between p-4 border-b border-novel-accent/20">
           <h2 className="text-xl font-serif text-novel-text">Lịch sử</h2>
@@ -19,7 +22,7 @@ export function HistoryLog() {
             <button onClick={() => { if (confirm('Xóa lịch sử?')) clearHistory(); }} className="px-3 py-1 rounded-lg text-sm text-novel-muted hover:text-red-400">
               Xóa tất cả
             </button>
-            <button onClick={() => setIsOpen(false)} className="p-2 rounded-lg hover:bg-novel-bg/50 text-novel-muted">
+            <button onClick={onClose} className="p-2 rounded-lg hover:bg-novel-bg/50 text-novel-muted">
               ✕
             </button>
           </div>
