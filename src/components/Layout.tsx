@@ -1,6 +1,6 @@
 import { useSceneManager } from '@/hooks/useSceneManager';
-import { SceneContainer } from '@/components/Scene';
-import { TopBar, SaveLoadMenu, HistoryLog, SettingsMenu, StatsPanel } from '@/components/UI';
+import { SceneContainer, TransitionOverlay } from '@/components/Scene';
+import { TopBar, SaveLoadMenu, HistoryLog, SettingsMenu, StatsPanel, HelpModal } from '@/components/UI';
 import { useGameStore } from '@/engine/StateManager';
 import { useAutoSave } from '@/hooks/useAutoSave';
 
@@ -50,10 +50,12 @@ export function Layout() {
         </div>
       )}
 
+      <TransitionOverlay />
       <SaveLoadMenu />
       <HistoryLog />
       <SettingsMenu />
       <StatsPanel />
+      <HelpModal />
     </div>
   );
 }

@@ -3,3 +3,4 @@ export { Character } from './Character';
 export { TextBox } from './TextBox';
 export { ChoiceButtons } from './ChoiceButtons';
 export { SceneContainer } from './SceneContainer';
+export { TransitionOverlay } from './TransitionOverlay';
