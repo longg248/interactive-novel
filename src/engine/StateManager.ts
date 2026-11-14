@@ -231,6 +231,15 @@ export const useGameStore = create<GameStore>()(
           const saved = localStorage.getItem(`save_slot_${slotId}`);
           if (!saved) return false;
           const slot: SaveSlot = JSON.parse(saved);
+
+          // Migration logic for future versions
+          if (slot.version !== '1.0.0') {
+            console.warn(`Save version mismatch: ${slot.version}, migrating...`);
+            // Add migration steps here for future versions
+            // For now, just update version
+            slot.version = '1.0.0';
+          }
+
           set({
             variables: slot.state.variables,
             flags: slot.state.flags,
