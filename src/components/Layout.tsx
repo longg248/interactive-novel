@@ -11,12 +11,13 @@ export function Layout() {
   
   const {
     phase,
-    currentParagraph,
-    displayedParagraphs,
+    paragraphs,
     choices,
-    nextParagraph,
+    completeScriptedContent,
     selectChoice,
   } = useSceneManager();
+
+  const currentSceneId = useGameStore((s) => s.currentSceneId);
 
   const {
     showSaveLoad,
@@ -31,10 +32,6 @@ export function Layout() {
     openHelp,
     closeAll,
   } = useUIStore();
-
-  const scriptedContent = displayedParagraphs.length > 0
-    ? displayedParagraphs
-    : currentParagraph ? [currentParagraph] : [];
 
   // Global keyboard shortcuts
   useEffect(() => {
@@ -77,12 +74,13 @@ export function Layout() {
 
       {phase !== 'loading' && (
         <SceneContainer
+          key={currentSceneId ?? 'scene'}
           sceneData={useGameStore.getState().currentSceneData || { background: 'black', characters: [] }}
-          content={scriptedContent}
+          content={paragraphs}
           choices={choices}
           onChoicesReady={() => {}}
           onChoiceSelect={selectChoice}
-          onSceneComplete={nextParagraph}
+          onSceneComplete={completeScriptedContent}
         />
       )}
 
@@ -91,6 +89,31 @@ export function Layout() {
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-4 border-novel-accent border-t-transparent mx-auto mb-4" />
             <p className="text-novel-text text-xl">Đang tải thế giới...</p>
+          </div>
+        </div>
+      )}
+
+      {phase === 'ended' && (
+        <div className="absolute inset-0 z-40 flex items-center justify-center novel-bg/90 backdrop-blur-sm pointer-events-none">
+          <div className="text-center pointer-events-auto">
+            <p className="text-novel-accent font-serif text-3xl mb-2">HẾT CHƯƠNG</p>
+            <p className="text-novel-muted text-sm mb-6 max-w-md">
+              Câu chuyện còn tiếp. Hãy tải lại game để bắt đầu một nhánh khác.
+            </p>
+            <div className="flex gap-3 justify-center">
+              <button
+                onClick={() => window.location.reload()}
+                className="px-6 py-3 rounded-xl border-2 border-novel-accent/40 text-novel-text hover:border-novel-accent hover:bg-novel-accent/10 transition-colors"
+              >
+                Chơi lại từ đầu
+              </button>
+              <button
+                onClick={openSaveLoad}
+                className="px-6 py-3 rounded-xl border-2 border-novel-muted/30 text-novel-text hover:border-novel-accent/40 transition-colors"
+              >
+                Tải bản lưu
+              </button>
+            </div>
           </div>
         </div>
       )}

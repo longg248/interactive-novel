@@ -1,0 +1,50 @@
+{
+  "id": "chapter1_01_sect_tour",
+  "type": "scripted",
+  "title": "Chương 1: Nhập Môn",
+  "sceneData": {
+    "background": "forest_path",
+    "characters": [],
+    "bgm": "peaceful",
+    "transition": "fade"
+  },
+  "content": {
+    "paragraphs": [
+      {
+        "speaker": null,
+        "text": "Bước qua cổng, ngươi bước vào một thế giới khác. Đường lát đá xanh uốn lượn giữa rừng thông, hai bên là những cây cổ thụ cao hơn trăm trượng. Linh khí ở đây đậm đặc đến mức có thể nhìn thấy bằng mắt thường - mảnh mây bạc lơ lửng lơ lửng giữa kẽ lá.",
+        "delay": 1200
+      },
+      {
+        "speaker": null,
+        "text": "Hai bên đường, đệ tử mặc áo xanh lụa đứng nép bên, cúi chào. Bọn trẻ tụ họp lại nhìn ngươi bằng ánh mắt vừa tò mò vừa ghen tị.",
+        "delay": 900
+      },
+      {
+        "speaker": null,
+        "text": "Phía xa, một tòa đạo quán trúc trúc sừng sũng bóng đứng lộn xuống bờ suối. Tiếng kiếm đao vọng ra từ phía đó - sắc, lạnh, và đều đặn.",
+        "delay": 1000
+      }
+    ]
+  },
+  "transitions": [
+    {
+      "targetNodeId": "chapter1_02_meet_lan",
+      "choiceId": "goto_dao_quan",
+      "text": "Đi đến đạo quán, tìm hiểu nơi tu luyện",
+      "type": "direct"
+    },
+    {
+      "targetNodeId": "chapter1_02_meet_lan",
+      "choiceId": "explore_sect",
+      "text": "Đi dạo một vòng trong môn phái trước",
+      "type": "direct"
+    }
+  ],
+  "conditions": [],
+  "metadata": {
+    "chapter": "Chương 1: Nhập Môn",
+    "estimatedDuration": 4,
+    "tags": ["chapter1", "exploration"]
+  }
+}

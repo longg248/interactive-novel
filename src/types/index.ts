@@ -134,6 +134,7 @@ export interface ScriptedParagraph {
 export interface NodeTransition {
   targetNodeId: string;
   choiceId: string;
+  text?: string; // label shown on the choice button
   conditions?: Condition[];
   type: 'direct' | 'ai_bridge'; // ai_bridge = AI generates transition
 }

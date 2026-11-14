@@ -28,8 +28,11 @@ export function SceneContainer({
     onChoicesReady(choices);
   }, [choices, onChoicesReady]);
 
+  // The TextBox has shown every paragraph: reveal the choices and let the
+  // scene manager know the scripted content is done.
   const handleTextComplete = () => {
     setShowChoices(true);
+    onSceneComplete();
   };
 
   const handleChoiceSelect = (choiceId: string) => {
@@ -47,29 +50,10 @@ export function SceneContainer({
         ))}
       </div>
 
-      <TextBox
-        paragraphs={content}
-        onComplete={handleTextComplete}
-      />
+      <TextBox paragraphs={content} onComplete={handleTextComplete} />
 
       {showChoices && choices.length > 0 && (
-        <ChoiceButtons
-          choices={choices}
-          onSelect={handleChoiceSelect}
-        />
-      )}
-
-      {showChoices && choices.length === 0 && (
-        <div className="absolute bottom-0 left-0 right-0 z-30 p-6 pointer-events-none">
-          <div className="max-w-xl mx-auto text-center text-novel-muted">
-            <button
-              onClick={onSceneComplete}
-              className="px-8 py-3 rounded-xl border-2 border-novel-accent/30 text-novel-text hover:border-novel-accent hover:bg-novel-accent/10 transition-colors"
-            >
-              Tiếp tục ▶
-            </button>
-          </div>
-        </div>
+        <ChoiceButtons choices={choices} onSelect={handleChoiceSelect} />
       )}
     </div>
   );

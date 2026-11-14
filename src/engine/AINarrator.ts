@@ -1,7 +1,14 @@
 import { SYSTEM_PROMPT, buildUserPrompt } from './prompts';
 import type { GameState, AINarratorResponse, SceneData } from '@/types';
 
-const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
+const GEMINI_API_BASE = 'https://generativelanguage.googleapis.com/v1beta/models';
+
+/**
+ * Model used for narration. Older models (gemini-1.5-flash, gemini-2.x-flash)
+ * are retired for new API keys and answer with 404, so the default is a
+ * current flash-lite build. Override with VITE_GEMINI_MODEL in .env.
+ */
+const DEFAULT_MODEL = 'gemini-3.1-flash-lite';
 
 interface GeminiResponse {
   candidates: Array<{
@@ -13,10 +20,12 @@ interface GeminiResponse {
 
 class AINarrator {
   private apiKey: string;
+  private model: string;
   private abortController: AbortController | null = null;
 
   constructor() {
     this.apiKey = import.meta.env.VITE_GEMINI_API_KEY || '';
+    this.model = import.meta.env.VITE_GEMINI_MODEL || DEFAULT_MODEL;
     if (!this.apiKey) {
       console.warn('VITE_GEMINI_API_KEY not set. AI Narrator will not work.');
     }
@@ -35,36 +44,45 @@ class AINarrator {
     const timeoutId = setTimeout(() => this.abortController?.abort(), 30000);
 
     try {
-      const response = await fetch(`${GEMINI_API_URL}?key=${this.apiKey}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [
-            { role: 'user', parts: [{ text: SYSTEM_PROMPT }] },
-            { role: 'model', parts: [{ text: 'Hiểu rồi. Tôi sẽ trả về JSON theo format yêu cầu.' }] },
-            { role: 'user', parts: [{ text: buildUserPrompt(gameState, sceneContext, playerInput) }] },
-          ],
-          generationConfig: {
-            temperature: 0.8,
-            topK: 40,
-            topP: 0.95,
-            maxOutputTokens: 4096,
-            responseMimeType: 'application/json',
-          },
-          safetySettings: [
-            { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
-            { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
-            { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
-            { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
-          ],
-        }),
-        signal: this.abortController.signal,
-      });
+      const response = await fetch(
+        `${GEMINI_API_BASE}/${this.model}:generateContent?key=${this.apiKey}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [
+              { role: 'user', parts: [{ text: SYSTEM_PROMPT }] },
+              {
+                role: 'model',
+                parts: [{ text: 'Hiểu rồi. Tôi sẽ trả về JSON theo format yêu cầu.' }],
+              },
+              { role: 'user', parts: [{ text: buildUserPrompt(gameState, sceneContext, playerInput) }] },
+            ],
+            generationConfig: {
+              temperature: 0.8,
+              topK: 40,
+              topP: 0.95,
+              maxOutputTokens: 4096,
+              responseMimeType: 'application/json',
+            },
+            safetySettings: [
+              { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
+              { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
+              { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
+              { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
+            ],
+          }),
+          signal: this.abortController.signal,
+        }
+      );
 
       clearTimeout(timeoutId);
 
       if (!response.ok) {
         if (response.status === 429) throw new Error('RATE_LIMIT');
+        if (response.status === 404) {
+          throw new Error(`Model "${this.model}" không tồn tại (404) - kiểm tra lại VITE_GEMINI_MODEL`);
+        }
         throw new Error(`API error: ${response.status}`);
       }
 

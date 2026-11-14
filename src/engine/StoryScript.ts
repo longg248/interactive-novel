@@ -1,4 +1,5 @@
 import type { StoryNode, ScriptedParagraph, Choice, SceneData, GameState, NodeTransition } from '@/types';
+import { assetUrl } from './paths';
 
 class StoryScript {
   private nodes: Map<string, StoryNode> = new Map();
@@ -9,12 +10,12 @@ class StoryScript {
     if (this.loaded) return;
 
     try {
-      const indexResponse = await fetch('/data/story/nodes/index.json');
+      const indexResponse = await fetch(assetUrl('data/story/nodes/index.json'));
       const index: string[] = await indexResponse.json();
 
       await Promise.all(
         index.map(async (nodeId) => {
-          const response = await fetch(`/data/story/nodes/${nodeId}.json`);
+          const response = await fetch(assetUrl(`data/story/nodes/${nodeId}.json`));
           if (response.ok) {
             const node: StoryNode = await response.json();
             this.nodes.set(nodeId, node);
@@ -91,7 +92,7 @@ class StoryScript {
   getChoicesFromNode(node: StoryNode): Choice[] {
     return node.transitions.map(t => ({
       id: t.choiceId,
-      text: this.getChoiceText(t.choiceId),
+      text: t.text || this.getChoiceText(t.choiceId),
       conditions: t.conditions,
     }));
   }

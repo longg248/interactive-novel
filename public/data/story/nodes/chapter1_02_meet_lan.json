@@ -1,0 +1,59 @@
+{
+  "id": "chapter1_02_meet_lan",
+  "type": "scripted",
+  "title": "Chương 1: Nhập Môn",
+  "sceneData": {
+    "background": "forest_path",
+    "characters": [
+      { "id": "lan", "sprite": "lan_happy", "position": "center" }
+    ],
+    "bgm": "peaceful",
+    "transition": "fade"
+  },
+  "content": {
+    "paragraphs": [
+      {
+        "speaker": null,
+        "text": "\"Sư huynh mới về!\" - một giọng nói trong trẻo cắt ngang không khí trầm tĩnh. Một cô gái trẻ mặc đồ xanh chạy ù ra từ bụi cây, tóc đuôi ngựa bay lất phất.",
+        "delay": 800
+      },
+      {
+        "speaker": "Tiểu Lan",
+        "text": "Tao là Tiểu Lan! Ngoại môn đệ tử, Trúc Cơ trung kỳ, ngồi cùng phòng với sư huynh sau này nha! 🎉",
+        "characterId": "lan",
+        "expression": "lan_happy"
+      },
+      {
+        "speaker": "Tiểu Lan",
+        "text": "Nghe nói sư huynh có Thiên Linh Căn đúng không? Trời ơi, mười năm mới có một người! Sư huynh phải cho tiểu muội kể chuyện đi!",
+        "characterId": "lan",
+        "expression": "lan_excited"
+      },
+      {
+        "speaker": null,
+        "text": "Cô bé vừa nói vừa tiến lại gần, mắt sáng rỡ. Đúng lúc đó, một cơn gió lớn thổi qua đường núi, tung lên một đám lá đỏ.",
+        "delay": 1000
+      }
+    ]
+  },
+  "transitions": [
+    {
+      "targetNodeId": "chapter1_03_cultivation_basics",
+      "choiceId": "talk_lan",
+      "text": "Nói chuyện với Tiểu Lan, hỏi về tu luyện",
+      "type": "direct"
+    },
+    {
+      "targetNodeId": "chapter1_03_cultivation_basics",
+      "choiceId": "polite_lan",
+      "text": "Lịch sự hỏi Tiểu Lan tên thật là gì",
+      "type": "direct"
+    }
+  ],
+  "conditions": [],
+  "metadata": {
+    "chapter": "Chương 1: Nhập Môn",
+    "estimatedDuration": 4,
+    "tags": ["chapter1", "lan"]
+  }
+}

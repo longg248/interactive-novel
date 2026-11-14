@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { assetLoader } from '@/engine/AssetLoader';
 import { useGameStore } from '@/engine/StateManager';
+import { assetUrl } from '@/engine/paths';
 import type { AssetManifest } from '@/types';
 
 export function useAssets() {
@@ -40,20 +41,20 @@ export function useAssets() {
 
 export function useBackground(key: string) {
   const { manifest } = useAssets();
-  return manifest?.backgrounds[key] ? `/${manifest.backgrounds[key]}` : '';
+  return manifest?.backgrounds[key] ? assetUrl(manifest.backgrounds[key]) : '';
 }
 
 export function useSprite(key: string) {
   const { manifest } = useAssets();
-  return manifest?.sprites[key] ? `/${manifest.sprites[key]}` : '';
+  return manifest?.sprites[key] ? assetUrl(manifest.sprites[key]) : '';
 }
 
 export function useBGM(key: string) {
   const { manifest } = useAssets();
-  return manifest?.audio.bgm[key] ? `/${manifest.audio.bgm[key]}` : '';
+  return manifest?.audio.bgm[key] ? assetUrl(manifest.audio.bgm[key]) : '';
 }
 
 export function useSFX(key: string) {
   const { manifest } = useAssets();
-  return manifest?.audio.sfx[key] ? `/${manifest.audio.sfx[key]}` : '';
+  return manifest?.audio.sfx[key] ? assetUrl(manifest.audio.sfx[key]) : '';
 }

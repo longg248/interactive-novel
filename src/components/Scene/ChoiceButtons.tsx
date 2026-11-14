@@ -1,3 +1,4 @@
+import { useEffect, useMemo } from 'react';
 import { useGameStore } from '@/engine/StateManager';
 import type { Choice } from '@/types';
 
@@ -10,11 +11,34 @@ interface ChoiceButtonsProps {
 export function ChoiceButtons({ choices, onSelect, disabled }: ChoiceButtonsProps) {
   const evaluateConditions = useGameStore((s) => s.evaluateConditions);
 
-  const availableChoices = choices.filter(c => {
-    if (c.hidden) return false;
-    if (c.disabled) return true;
-    return evaluateConditions(c.conditions || []);
-  });
+  const availableChoices = useMemo(
+    () =>
+      choices.filter(c => {
+        if (c.hidden) return false;
+        if (c.disabled) return true;
+        return evaluateConditions(c.conditions || []);
+      }),
+    [choices, evaluateConditions]
+  );
+
+  // Number keys pick a choice directly.
+  useEffect(() => {
+    if (disabled) return;
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+        return;
+      }
+      const n = Number(e.key);
+      if (!Number.isInteger(n) || n < 1 || n > 9) return;
+      const choice = availableChoices[n - 1];
+      if (choice && !choice.disabled) {
+        e.preventDefault();
+        onSelect(choice.id);
+      }
+    };
+    window.addEventListener('keydown', handleKey);
+    return () => window.removeEventListener('keydown', handleKey);
+  }, [availableChoices, onSelect, disabled]);
 
   if (availableChoices.length === 0) return null;
 

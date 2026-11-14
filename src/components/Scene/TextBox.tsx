@@ -17,75 +17,89 @@ export function TextBox({ paragraphs, onComplete, onParagraphChange }: TextBoxPr
   const [showContinue, setShowContinue] = useState(false);
 
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
+  const autoTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
   const skipRef = useRef(false);
   const autoRef = useRef(false);
+
+  // Refs keep the typewriter callbacks reading current values instead of the
+  // ones captured when the callback was created.
+  const paragraphsRef = useRef(paragraphs);
+  const indexRef = useRef(currentIndex);
+  const continueRef = useRef<() => void>(() => undefined);
+  const completeRef = useRef(onComplete);
+  paragraphsRef.current = paragraphs;
+  indexRef.current = currentIndex;
+  completeRef.current = onComplete;
 
   const currentPara = paragraphs[currentIndex];
   const textSpeed = settings.textSpeed * 20;
   const autoSpeed = settings.autoSpeed * 500;
 
-  const typeText = useCallback((text: string, instant = false) => {
-    setIsTyping(true);
-    setDisplayedText('');
-    if (instant || textSpeed <= 0) {
-      setDisplayedText(text);
-      setIsTyping(false);
-      handleTypeComplete();
-      return;
+  const handleTypeComplete = useCallback(() => {
+    setShowContinue(true);
+    if (autoRef.current && indexRef.current < paragraphsRef.current.length - 1) {
+      autoTimeoutRef.current = window.setTimeout(() => continueRef.current(), autoSpeed);
     }
+  }, [autoSpeed]);
 
-    let i = 0;
-    const type = () => {
-      if (skipRef.current) {
+  const typeText = useCallback(
+    (text: string) => {
+      setIsTyping(true);
+      setDisplayedText('');
+
+      if (textSpeed <= 0) {
         setDisplayedText(text);
         setIsTyping(false);
-        skipRef.current = false;
         handleTypeComplete();
         return;
       }
-      if (i < text.length) {
-        setDisplayedText(text.slice(0, i + 1));
-        i++;
-        typingTimeoutRef.current = setTimeout(type, textSpeed);
-      } else {
-        setIsTyping(false);
-        handleTypeComplete();
-      }
-    };
-    type();
-  }, [textSpeed]);
 
-  const handleTypeComplete = () => {
-    setShowContinue(true);
-    if (autoRef.current && currentIndex < paragraphs.length - 1) {
-      setTimeout(() => handleContinue(), autoSpeed);
-    }
-  };
+      let i = 0;
+      const type = () => {
+        if (skipRef.current) {
+          skipRef.current = false;
+          setDisplayedText(text);
+          setIsTyping(false);
+          handleTypeComplete();
+          return;
+        }
+        if (i < text.length) {
+          setDisplayedText(text.slice(0, i + 1));
+          i += 1;
+          typingTimeoutRef.current = window.setTimeout(type, textSpeed);
+        } else {
+          setIsTyping(false);
+          handleTypeComplete();
+        }
+      };
+      type();
+    },
+    [textSpeed, handleTypeComplete]
+  );
 
-  const handleContinue = () => {
+  const handleContinue = useCallback(() => {
     if (isTyping) {
       skipRef.current = true;
       return;
     }
-    if (currentIndex < paragraphs.length - 1) {
-      setCurrentIndex(prev => prev + 1);
-      onParagraphChange?.(currentIndex + 1);
+    const list = paragraphsRef.current;
+    const idx = indexRef.current;
+    if (idx < list.length - 1) {
+      const next = idx + 1;
+      setCurrentIndex(next);
+      indexRef.current = next;
+      onParagraphChange?.(next);
     } else {
       setIsComplete(true);
-      onComplete();
+      completeRef.current();
     }
-  };
+  }, [isTyping, onParagraphChange]);
 
-  const handleSkip = () => {
-    skipRef.current = true;
-  };
+  continueRef.current = handleContinue;
 
-  const handleAutoToggle = () => {
-    autoRef.current = !autoRef.current;
-  };
-
+  // History: record a paragraph once its full text has been shown.
   useEffect(() => {
-    if (currentPara && displayedText === currentPara.text) {
+    if (currentPara && currentPara.text.length > 0 && displayedText === currentPara.text) {
       addHistory({
         sceneId: '',
         speaker: currentPara.speaker,
@@ -95,29 +109,40 @@ export function TextBox({ paragraphs, onComplete, onParagraphChange }: TextBoxPr
     }
   }, [displayedText, currentPara, addHistory]);
 
+  // Type the paragraph at currentIndex.
   useEffect(() => {
     setShowContinue(false);
     if (currentPara) {
       typeText(currentPara.text);
     }
-  }, [currentIndex, typeText]);
+  }, [currentIndex, currentPara, typeText]);
 
+  // Keyboard: Space/Enter/Right advance, S skips typing, A toggles auto.
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+        return;
+      }
       if (e.code === 'Space' || e.code === 'Enter' || e.code === 'ArrowRight') {
         e.preventDefault();
-        handleContinue();
+        continueRef.current();
       } else if (e.code === 'KeyS') {
-        handleSkip();
+        skipRef.current = true;
       } else if (e.code === 'KeyA') {
-        handleAutoToggle();
+        autoRef.current = !autoRef.current;
       }
     };
     window.addEventListener('keydown', handleKey);
     return () => window.removeEventListener('keydown', handleKey);
-  }, [isTyping, handleContinue, handleSkip, handleAutoToggle]);
+  }, []);
 
-  useEffect(() => () => clearTimeout(typingTimeoutRef.current), []);
+  useEffect(
+    () => () => {
+      clearTimeout(typingTimeoutRef.current);
+      clearTimeout(autoTimeoutRef.current);
+    },
+    []
+  );
 
   if (!currentPara) return null;
 
@@ -130,8 +155,11 @@ export function TextBox({ paragraphs, onComplete, onParagraphChange }: TextBoxPr
           </div>
         )}
 
-        <div className="novel-panel rounded-xl p-5 md:p-6 relative bg-novel-panel/95 backdrop-blur-sm border border-novel-accent/20">
-          <p className="novel-text text-lg md:text-xl leading-relaxed whitespace-pre-wrap">
+        <div
+          onClick={() => continueRef.current()}
+          className="novel-panel rounded-xl p-5 md:p-6 relative bg-novel-panel/95 backdrop-blur-sm border border-novel-accent/20 cursor-pointer select-none"
+        >
+          <p className="text-novel-text text-lg md:text-xl leading-relaxed whitespace-pre-wrap">
             {displayedText}
           </p>
 
@@ -141,10 +169,9 @@ export function TextBox({ paragraphs, onComplete, onParagraphChange }: TextBoxPr
             </div>
           )}
 
-          {(autoRef.current || skipRef.current) && (
+          {autoRef.current && (
             <div className="absolute top-3 right-3 text-xs text-novel-muted flex gap-2 items-center">
-              {autoRef.current && <span className="text-novel-accent">⏵ AUTO</span>}
-              {skipRef.current && <span>⏩ SKIP</span>}
+              <span className="text-novel-accent">⏵ AUTO</span>
             </div>
           )}
         </div>

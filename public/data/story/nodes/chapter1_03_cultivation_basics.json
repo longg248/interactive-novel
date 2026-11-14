@@ -1,0 +1,59 @@
+{
+  "id": "chapter1_03_cultivation_basics",
+  "type": "scripted",
+  "title": "Chương 1: Nhập Môn",
+  "sceneData": {
+    "background": "temple_interior",
+    "characters": [
+      { "id": "lan", "sprite": "lan_excited", "position": "left" }
+    ],
+    "bgm": "peaceful",
+    "transition": "fade"
+  },
+  "content": {
+    "paragraphs": [
+      {
+        "speaker": null,
+        "text": "Tiểu Lan dẫn ngươi vào một gian động thất nhỏ đào trong lòng núi. Trên bàn đá có một bát trà còn nóng, bên cạnh là mấy cuốn sách đã ngả màu.",
+        "delay": 900
+      },
+      {
+        "speaker": "Tiểu Lan",
+        "text": "Tu chân có chín cấp: Luyện Khí, Trúc Cơ, Kim Đan, Nguyên Anh, Hóa Thần, Luyện Hư, Đại Thừa, Động Tịch, và cuối cùng là Thăng Tiên.",
+        "characterId": "lan",
+        "expression": "lan_excited"
+      },
+      {
+        "speaker": "Tiểu Lan",
+        "text": "Sư huynh có Thiên Linh Căn thì tu luyện cấp Luyện Khí sẽ nhanh gấp mấy lần người thường. Nhưng mà đừng có lười nhé! Tiểu muội lười lắm, luyện ba năm mới tới Trúc Cơ sơ kỳ đó! 😴",
+        "characterId": "lan",
+        "expression": "lan_pout"
+      },
+      {
+        "speaker": null,
+        "text": "Ngươi nhìn cô bé, không khỏi bật cười. Đây là cái tỷ muội mà cả đời ngươi sẽ ở cùng.",
+        "delay": 1000
+      }
+    ]
+  },
+  "transitions": [
+    {
+      "targetNodeId": "chapter1_ending_choice",
+      "choiceId": "start_cultivation",
+      "text": "Bắt đầu nhập môn tu luyện Luyện Khí",
+      "type": "direct"
+    },
+    {
+      "targetNodeId": "chapter1_ending_choice",
+      "choiceId": "meditate",
+      "text": "Ngồi thiền, cảm nhận linh khí xung quanh",
+      "type": "direct"
+    }
+  ],
+  "conditions": [],
+  "metadata": {
+    "chapter": "Chương 1: Nhập Môn",
+    "estimatedDuration": 4,
+    "tags": ["chapter1", "cultivation", "lan"]
+  }
+}

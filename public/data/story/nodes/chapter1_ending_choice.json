@@ -1,0 +1,50 @@
+{
+  "id": "chapter1_ending_choice",
+  "type": "ending",
+  "title": "Chương 1: Nhập Môn - Kết",
+  "sceneData": {
+    "background": "temple_interior",
+    "characters": [
+      { "id": "lan", "sprite": "lan_happy", "position": "center" }
+    ],
+    "bgm": "peaceful",
+    "transition": "fade"
+  },
+  "content": {
+    "paragraphs": [
+      {
+        "speaker": null,
+        "text": "Đêm đầu tiên trong Thanh Vân Tông trôi qua trong im lặng. Ngươi ngồi trên đài thiền đá, để linh khí trong núi chảy vào tận xương tủy. Chậm rãi, chậm rãi.",
+        "delay": 1200
+      },
+      {
+        "speaker": null,
+        "text": "Khi mở mắt ra, trời đã sáng. Một luồng linh khí mỏng manh nhưng tinh thuần đang lưu chuyển trong đan điền - đây là dấu hiệu của Luyện Khí sơ kỳ.",
+        "delay": 1000
+      },
+      {
+        "speaker": "Tiểu Lan",
+        "text": "Sư huynh! Sư huynh đột phá rồi! Tiểu muội đã nói mà, Thiên Linh Căn đúng là khác biệt luôn! 🥳",
+        "characterId": "lan",
+        "expression": "lan_happy"
+      },
+      {
+        "speaker": null,
+        "text": "Chương 1 khép lại. Còn rất nhiều núi cao, rất nhiều cổ đạo, và một kẻ thù chưa từng gặp mặt đang ở nơi nào đó trong Ma Uyên.",
+        "delay": 1200
+      },
+      {
+        "speaker": null,
+        "text": "--- HẾT CHƯƠNG 1 ---",
+        "delay": 500
+      }
+    ]
+  },
+  "transitions": [],
+  "conditions": [],
+  "metadata": {
+    "chapter": "Chương 1: Nhập Môn",
+    "estimatedDuration": 3,
+    "tags": ["chapter1", "ending"]
+  }
+}

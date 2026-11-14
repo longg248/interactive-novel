@@ -55,13 +55,46 @@ See [STORY_AUTHORING.md](STORY_AUTHORING.md)
 ## Keyboard Shortcuts
 | Key | Action |
 |-----|--------|
-| Space / Enter / → | Continue / Select |
-| S | Skip text |
-| A | Toggle Auto |
-| H | History log |
-| Esc | Close menu / Settings |
-| Ctrl+S | Quick save |
-| 1-4 | Quick choice select |
+| Space / Enter / → | Continue / next paragraph |
+| Click vào khung chữ | Continue (mouse support) |
+| S | Skip typing - hiện nguyên đoạn |
+| A | Bật/tắt Auto |
+| 1-9 | Chọn lựa chọn nhanh |
+| H | Mở lịch sử |
+| ? | Mở bảng phím tắt |
+| Esc | Đóng menu |
+| Ctrl+S | Mở Save/Load |
+
+## Story Content
+
+Các node truyện nằm trong `public/data/story/nodes/`. Mỗi node là một file JSON,
+được liệt kê trong `public/data/story/nodes/index.json`.
+
+Kiểm tra tính toàn vẹn của đồ thị truyện (node tồn tại, transition hợp lệ, không có
+node mồ côi / không tới được):
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/validate-story.ps1
+```
+
+Xem [STORY_AUTHORING.md](STORY_AUTHORING.md) để biết cấu trúc node, condition và
+cách viết choice.
+
+## Hình ảnh & âm thanh
+
+Game **chạy được ngay** với story hiện có, nhưng chưa có artwork. Thêm file vào
+`public/assets/` theo tên trong `public/assets/manifest.json`:
+
+| Loại | Đường dẫn | Kích thước gợi ý |
+|------|-----------|-----------------|
+| Background | `public/assets/backgrounds/*.webp` | 1920x1080 |
+| Sprite | `public/assets/sprites/*.webp` | cao ~800px, nền trong suốt |
+| BGM | `public/assets/audio/bgm/*.ogg` | loopable 1-3 phút |
+| SFX | `public/assets/audio/sfx/*.ogg` | ngắn |
+
+Thêm key mới vào `public/assets/manifest.json` rồi trỏ tới từ node truyện.
+Xem [ASSETS_GUIDE.md](ASSETS_GUIDE.md) để biết nguồn asset miễn phí.
+
 
 ## Deployment
 Deploy `dist/` folder to Vercel, Netlify, or GitHub Pages.

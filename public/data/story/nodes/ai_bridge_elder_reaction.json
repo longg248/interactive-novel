@@ -1,0 +1,53 @@
+{
+  "id": "ai_bridge_elder_reaction",
+  "type": "scripted",
+  "title": "Chương 1: Nhập Môn",
+  "sceneData": {
+    "background": "temple_exterior",
+    "characters": [
+      { "id": "elder", "sprite": "elder_serious", "position": "center" }
+    ],
+    "bgm": "peaceful",
+    "transition": "fade"
+  },
+  "content": {
+    "paragraphs": [
+      {
+        "speaker": null,
+        "text": "Lão Tổ khẽ nhướn mày. Đôi mắt sâu thẳm như biển lớn chợt lấp lánh một tia thú vị hiếm thấy.",
+        "delay": 700
+      },
+      {
+        "speaker": "Lão Tổ Thanh Vân",
+        "text": "Ngươi dám hỏi lão phu? Tốt. Người biết hỏi thì mới biết học, không biết hỏi thì cả đời chỉ tu một mình.",
+        "characterId": "elder",
+        "expression": "elder_smile"
+      },
+      {
+        "speaker": "Lão Tổ Thanh Vân",
+        "text": "Lão phu là Lão Tổ Thanh Vân, trưởng lão ngoại môn, tu vi Hóa Thần sơ kỳ. Còn ngươi - một phàm nhân từ dưới chân núi - vừa bước vào Thanh Vân Tông bằng đôi chân của chính mình.",
+        "characterId": "elder",
+        "expression": "elder_serious"
+      },
+      {
+        "speaker": null,
+        "text": "Ngươi gật đầu. Cổng đá xanh trước mặt khẽ rít, đang chờ đợi.",
+        "delay": 1000
+      }
+    ]
+  },
+  "transitions": [
+    {
+      "targetNodeId": "chapter1_01_sect_tour",
+      "choiceId": "enter_sect",
+      "text": "Bước qua cổng núi, bắt đầu con đường tu tiên",
+      "type": "direct"
+    }
+  ],
+  "conditions": [],
+  "metadata": {
+    "chapter": "Chương 1: Nhập Môn",
+    "estimatedDuration": 3,
+    "tags": ["prologue", "elder", "curious"]
+  }
+}

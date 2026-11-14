@@ -36,9 +36,13 @@ class SceneManager {
     isTransitioning: false,
   };
 
-  private subscribers: Array<(state: SceneManagerState) => void> = [];
+  // Stable snapshot for useSyncExternalStore: the reference only changes when
+  // the state actually changes, so React can compare it cheaply.
+  private snapshot: SceneManagerState = { ...this.state };
 
-  subscribe(callback: (state: SceneManagerState) => void): () => void {
+  private subscribers: Array<() => void> = [];
+
+  subscribe(callback: () => void): () => void {
     this.subscribers.push(callback);
     return () => {
       this.subscribers = this.subscribers.filter(c => c !== callback);
@@ -46,11 +50,12 @@ class SceneManager {
   }
 
   private notify(): void {
-    this.subscribers.forEach(cb => cb(this.state));
+    this.snapshot = { ...this.state };
+    this.subscribers.forEach(cb => cb());
   }
 
   getState(): SceneManagerState {
-    return { ...this.state };
+    return this.snapshot;
   }
 
   async initialize(startNodeId = 'prologue_01'): Promise<void> {
@@ -88,16 +93,19 @@ class SceneManager {
     this.setPhase('scripted');
   }
 
-  nextParagraph(): boolean {
-    if (this.state.phase !== 'scripted' && this.state.phase !== 'ai_bridge') return false;
-    if (this.state.currentParagraphIndex >= this.state.scriptedParagraphs.length - 1) {
-      this.setPhase('choices');
-      return false;
+  /**
+   * Called by the TextBox once every paragraph of the current node has been
+   * displayed. The TextBox owns the typing animation and its own paragraph
+   * cursor, so the manager only needs to flip the phase and expose choices.
+   */
+  completeScriptedContent(): void {
+    if (this.state.phase !== 'scripted' && this.state.phase !== 'ai_bridge') return;
+    this.state.currentParagraphIndex = Math.max(0, this.state.scriptedParagraphs.length - 1);
+    if (this.state.currentNode?.type === 'ending') {
+      this.setPhase('ended');
+      return;
     }
-
-    this.state.currentParagraphIndex++;
-    this.notify();
-    return true;
+    this.setPhase('choices');
   }
 
   async selectChoice(choiceId: string): Promise<void> {
@@ -173,6 +181,11 @@ class SceneManager {
       return this.state.scriptedParagraphs[this.state.currentParagraphIndex];
     }
     return null;
+  }
+
+  /** Full paragraph list of the current node - the TextBox types through all of them. */
+  getParagraphs(): ScriptedParagraph[] {
+    return this.state.scriptedParagraphs;
   }
 
   getDisplayedParagraphs(): ScriptedParagraph[] {

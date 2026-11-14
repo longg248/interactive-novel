@@ -1,0 +1,53 @@
+{
+  "id": "prologue_02_intro",
+  "type": "scripted",
+  "title": "Chương 1: Nhập Môn",
+  "sceneData": {
+    "background": "temple_exterior",
+    "characters": [
+      { "id": "elder", "sprite": "elder_smile", "position": "center" }
+    ],
+    "bgm": "peaceful",
+    "transition": "fade"
+  },
+  "content": {
+    "paragraphs": [
+      {
+        "speaker": null,
+        "text": "Ngươi hít một hơi thật sâu, rồi cúi đầu thật thấp. Gió trên đỉnh núi lùa qua khe tóc, mang theo tiếng chuông gió vọng từ đâu đó rất xa.",
+        "delay": 800
+      },
+      {
+        "speaker": "Lão Tổ Thanh Vân",
+        "text": "Tên ngươi là Hạ Linh. Từ hôm nay, ngươi là đệ tử ngoại môn của Thanh Vân Tông.",
+        "characterId": "elder",
+        "expression": "elder_smile"
+      },
+      {
+        "speaker": "Lão Tổ Thanh Vân",
+        "text": "Lão phu đã nhìn thấy tinh thần ngươi trong đáy mắt. Thiên Linh Căn là vận mệnh - hoặc là gánh nặng. Tu đường phía trước, ngươi tự đi mà lão phu không thể đi cùng.",
+        "characterId": "elder",
+        "expression": "elder_serious"
+      },
+      {
+        "speaker": null,
+        "text": "Trên đỉnh Thanh Vân Sơn, cổng đá xanh khẽ rít. Đó là lời mời vào bước đầu tiên của ngươi trong thế giới tu tiên.",
+        "delay": 1000
+      }
+    ]
+  },
+  "transitions": [
+    {
+      "targetNodeId": "chapter1_01_sect_tour",
+      "choiceId": "enter_sect",
+      "text": "Bước qua cổng núi, bắt đầu con đường tu tiên",
+      "type": "direct"
+    }
+  ],
+  "conditions": [],
+  "metadata": {
+    "chapter": "Chương 1: Nhập Môn",
+    "estimatedDuration": 3,
+    "tags": ["prologue", "elder"]
+  }
+}

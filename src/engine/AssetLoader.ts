@@ -1,4 +1,5 @@
 import type { AssetManifest } from '@/types';
+import { assetUrl } from './paths';
 
 class AssetLoader {
   private manifest: AssetManifest | null = null;
@@ -6,7 +7,7 @@ class AssetLoader {
   private loadingPromises: Map<string, Promise<void>> = new Map();
 
   async loadManifest(): Promise<AssetManifest> {
-    const response = await fetch('/assets/manifest.json');
+    const response = await fetch(assetUrl('assets/manifest.json'));
     if (!response.ok) throw new Error('Failed to load asset manifest');
     this.manifest = await response.json();
     return this.manifest!;
@@ -20,7 +21,8 @@ class AssetLoader {
     if (!this.manifest) return '';
     const category = type === 'bgm' || type === 'sfx' ? 'audio' : type;
     const map = this.manifest[category as keyof AssetManifest] as Record<string, string>;
-    return map?.[key] ?? '';
+    const path = map?.[key];
+    return path ? assetUrl(path) : '';
   }
 
   async preloadBackgrounds(keys: string[]): Promise<void> {

@@ -1,0 +1,59 @@
+{
+  "id": "prologue_02_silent",
+  "type": "scripted",
+  "title": "Chương 1: Nhập Môn",
+  "sceneData": {
+    "background": "temple_exterior",
+    "characters": [
+      { "id": "elder", "sprite": "elder_neutral", "position": "center" }
+    ],
+    "bgm": "peaceful",
+    "transition": "fade"
+  },
+  "content": {
+    "paragraphs": [
+      {
+        "speaker": null,
+        "text": "Ngươi không nói gì. Cũng không ngẩng đầu lên. Trong tu chân, im lặng đôi khi nói nhiều hơn lời nói.",
+        "delay": 800
+      },
+      {
+        "speaker": "Lão Tổ Thanh Vân",
+        "text": "...",
+        "characterId": "elder",
+        "expression": "elder_neutral"
+      },
+      {
+        "speaker": "Lão Tổ Thanh Vân",
+        "text": "Hừ. Bọn trẻ tuổi thời nay càng ngày càng ít biết lễ nghĩa. Nhưng lão phu cũng từng là một kẻ ít lời.",
+        "characterId": "elder",
+        "expression": "elder_smile"
+      },
+      {
+        "speaker": "Lão Tổ Thanh Vân",
+        "text": "Đi theo lão phu. Từ hôm nay, ngươi là đệ tử ngoại môn của Thanh Vân Tông. Cổng núi đang mở, đừng đứng lại.",
+        "characterId": "elder",
+        "expression": "elder_neutral"
+      },
+      {
+        "speaker": null,
+        "text": "Ngươi bước theo. Cổng đá xanh khẽ rít sau lưng, khép lại vĩnh viễn.",
+        "delay": 1000
+      }
+    ]
+  },
+  "transitions": [
+    {
+      "targetNodeId": "chapter1_01_sect_tour",
+      "choiceId": "enter_sect",
+      "text": "Bước qua cổng núi, bắt đầu con đường tu tiên",
+      "type": "direct"
+    }
+  ],
+  "conditions": [],
+  "metadata": {
+    "chapter": "Chương 1: Nhập Môn",
+    "estimatedDuration": 3,
+    "tags": ["prologue", "elder", "silent"]
+  }
+}
