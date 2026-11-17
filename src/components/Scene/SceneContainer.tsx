@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Background } from './Background';
 import { Character } from './Character';
 import { TextBox } from './TextBox';
@@ -23,6 +23,16 @@ export function SceneContainer({
   onSceneComplete,
 }: SceneContainerProps) {
   const [showChoices, setShowChoices] = useState(false);
+  const [paraIndex, setParaIndex] = useState(0);
+
+  // A paragraph may switch a character's expression (stored as a sprite key).
+  const characters = useMemo(() => {
+    const para = content[paraIndex];
+    if (!para?.characterId || !para.expression) return sceneData.characters;
+    return sceneData.characters.map((c) =>
+      c.id === para.characterId ? { ...c, sprite: para.expression as string } : c
+    );
+  }, [sceneData.characters, content, paraIndex]);
 
   useEffect(() => {
     onChoicesReady(choices);
@@ -45,12 +55,12 @@ export function SceneContainer({
       <Background sceneData={sceneData} />
 
       <div className="absolute inset-0 z-10 pointer-events-none">
-        {sceneData.characters.map((char) => (
+        {characters.map((char) => (
           <Character key={char.id} character={char} />
         ))}
       </div>
 
-      <TextBox paragraphs={content} onComplete={handleTextComplete} />
+      <TextBox paragraphs={content} onComplete={handleTextComplete} onParagraphChange={setParaIndex} />
 
       {showChoices && choices.length > 0 && (
         <ChoiceButtons choices={choices} onSelect={handleChoiceSelect} />

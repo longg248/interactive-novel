@@ -5,6 +5,11 @@ import { useGameStore } from '@/engine/StateManager';
 import { useAutoSave } from '@/hooks/useAutoSave';
 import { useUIStore } from '@/engine/UIState';
 import { useEffect } from 'react';
+import { FreeRoleplay } from '@/components/FreeRoleplay';
+import { sceneManager } from '@/engine/SceneManager';
+
+const noop = () => undefined;
+const EMPTY_SCENE = { background: 'black', characters: [] };
 
 export function Layout() {
   useAutoSave();
@@ -13,11 +18,23 @@ export function Layout() {
     phase,
     paragraphs,
     choices,
+    sceneKey,
+    errorMessage,
     completeScriptedContent,
     selectChoice,
   } = useSceneManager();
 
-  const currentSceneId = useGameStore((s) => s.currentSceneId);
+  const currentSceneData = useGameStore((s) => s.currentSceneData);
+  const incrementPlaytime = useGameStore((s) => s.incrementPlaytime);
+
+  // Playtime was never incremented anywhere: count seconds while the game is actually being played.
+  useEffect(() => {
+    if (phase === 'loading' || phase === 'error') return;
+    const id = window.setInterval(() => {
+      if (!document.hidden) incrementPlaytime(1);
+    }, 1000);
+    return () => window.clearInterval(id);
+  }, [phase, incrementPlaytime]);
 
   const {
     showSaveLoad,
@@ -25,6 +42,8 @@ export function Layout() {
     showSettings,
     showStats,
     showHelp,
+    showFree,
+    openFree,
     openSaveLoad,
     openHistory,
     openSettings,
@@ -41,15 +60,16 @@ export function Layout() {
         return;
       }
 
-      if (e.ctrlKey && e.key === 's') {
+      if (e.ctrlKey && e.key.toLowerCase() === 's') {
         e.preventDefault();
         openSaveLoad();
       }
+      if (showFree && e.key !== 'Escape') return;
       if (e.key === 'Escape') {
         closeAll();
       }
       if (e.key === 'h' || e.key === 'H') {
-        if (!showSaveLoad && !showSettings && !showStats) {
+        if (!showSaveLoad && !showSettings && !showStats && !showHelp) {
           openHistory();
         }
       }
@@ -60,7 +80,7 @@ export function Layout() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [showSaveLoad, showSettings, showStats, openSaveLoad, openHistory, openSettings, openStats, openHelp, closeAll]);
+  }, [showSaveLoad, showSettings, showStats, showHelp, showFree, openSaveLoad, openHistory, openSettings, openStats, openHelp, closeAll]);
 
   return (
     <div className="relative w-full h-screen novel-bg overflow-hidden">
@@ -70,18 +90,43 @@ export function Layout() {
         onSettings={openSettings}
         onHistory={openHistory}
         onStats={openStats}
+        onFree={openFree}
       />
 
-      {phase !== 'loading' && (
+      {phase !== 'loading' && phase !== 'error' && (
         <SceneContainer
-          key={currentSceneId ?? 'scene'}
-          sceneData={useGameStore.getState().currentSceneData || { background: 'black', characters: [] }}
+          key={sceneKey}
+          sceneData={currentSceneData || EMPTY_SCENE}
           content={paragraphs}
           choices={choices}
-          onChoicesReady={() => {}}
-          onChoiceSelect={selectChoice}
+          onChoicesReady={noop}
+          onChoiceSelect={(id) => void selectChoice(id)}
           onSceneComplete={completeScriptedContent}
         />
+      )}
+
+      {phase === 'ai_generating' && (
+        <div className="absolute inset-0 z-40 flex items-center justify-center bg-black/50 backdrop-blur-sm pointer-events-none">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-10 w-10 border-4 border-novel-accent border-t-transparent mx-auto mb-3" />
+            <p className="text-novel-text">Người kể chuyện đang suy nghĩ...</p>
+          </div>
+        </div>
+      )}
+
+      {phase === 'error' && (
+        <div className="absolute inset-0 z-50 flex items-center justify-center novel-bg">
+          <div className="text-center max-w-md px-6">
+            <p className="text-novel-accent font-serif text-2xl mb-2">Không thể tải truyện</p>
+            <p className="text-novel-muted text-sm mb-6 break-words">{errorMessage}</p>
+            <button
+              onClick={() => void sceneManager.retryInitialize()}
+              className="px-6 py-3 rounded-xl border-2 border-novel-accent/40 text-novel-text hover:border-novel-accent hover:bg-novel-accent/10 transition-colors"
+            >
+              Thử lại
+            </button>
+          </div>
+        </div>
       )}
 
       {phase === 'loading' && (
@@ -123,6 +168,7 @@ export function Layout() {
       <HistoryLog isOpen={showHistory} onClose={() => useUIStore.getState().closeHistory()} />
       <SettingsMenu isOpen={showSettings} onClose={() => useUIStore.getState().closeSettings()} />
       <StatsPanel isOpen={showStats} onClose={() => useUIStore.getState().closeStats()} />
+      <FreeRoleplay isOpen={showFree} onClose={() => useUIStore.getState().closeFree()} />
       <HelpModal isOpen={showHelp} onClose={() => useUIStore.getState().closeHelp()} />
     </div>
   );

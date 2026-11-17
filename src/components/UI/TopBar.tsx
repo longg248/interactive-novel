@@ -6,9 +6,10 @@ interface TopBarProps {
   onSettings: () => void;
   onHistory: () => void;
   onStats: () => void;
+  onFree: () => void;
 }
 
-export function TopBar({ onSave, onLoad, onSettings, onHistory, onStats }: TopBarProps) {
+export function TopBar({ onSave, onLoad, onSettings, onHistory, onStats, onFree }: TopBarProps) {
   const chapter = useGameStore((s) => s.chapter);
   const playtime = useGameStore((s) => s.playtime);
 
@@ -28,6 +29,9 @@ export function TopBar({ onSave, onLoad, onSettings, onHistory, onStats }: TopBa
           {formatTime(playtime)}
         </div>
         <div className="flex items-center gap-2">
+          <button onClick={onFree} className="p-2 rounded-lg hover:bg-novel-panel/50 transition-colors text-novel-text" title="Nhập vai tự do">
+            ✍️
+          </button>
           <button onClick={onHistory} className="p-2 rounded-lg hover:bg-novel-panel/50 transition-colors text-novel-text" title="Lịch sử (H)">
             📜
           </button>

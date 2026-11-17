@@ -17,7 +17,7 @@
   "lan": {
     "id": "lan",
     "name": "Tiểu Lan",
-    "title": "Đệ tử nội môn, Trúc Cơ trung kỳ",
+    "title": "Đệ tử Thanh Vân Tông, Trúc Cơ trung kỳ",
     "personality": "Hoạt bát, ham chơi, thích trêu chọc sư huynh/sư tỷ. Nói nhanh, dùng từ lóng, emoji. Thích ăn ngon.",
     "sprites": {
       "neutral": "lan_neutral",
@@ -35,7 +35,7 @@
     "personality": "Cao ngạo, khinh thường chính đạo, tuân thủ quy tắc ma đạo riêng. Nói ít, hành động quyết đoán.",
     "sprites": {
       "neutral": "huyet_y_neutral",
-      "smirk": "huyet_y_smock",
+      "smirk": "huyet_y_smirk",
       "cold": "huyet_y_cold",
       "battle": "huyet_y_battle"
     },

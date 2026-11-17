@@ -25,7 +25,7 @@ export function useAssets() {
       })
       .catch((e) => {
         if (mounted) {
-          setError(e);
+          setError(e instanceof Error ? e : new Error(String(e)));
           setLoading(false);
         }
       });
